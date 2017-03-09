@@ -88,8 +88,8 @@ class ModelElementBase(ElementBase):
 
     All model elements can be instantiated into :class:`ServiceInstance` elements.
     """
-
-    def instantiate(self, context, container):
+    @classmethod
+    def instantiate(cls, *args, **kwargs):
         raise NotImplementedError
 
 

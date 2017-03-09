@@ -22,7 +22,8 @@ import aria
 
 @pytest.fixture(scope='session', autouse=True)
 def install_aria_extensions():
-    aria.install_aria_extensions()
+    pass
+    # aria.install_aria_extensions()
 
 
 @pytest.fixture(autouse=True)
