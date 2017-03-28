@@ -13,34 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-CLI configuration
-"""
 
-import os
-import logging
-from getpass import getuser
-from tempfile import gettempdir
+import pytest
 
-from yaml import safe_load
-
-from .storage import config_file_path
-
-# path to a file where cli logs will be saved.
-logging_filename = os.path.join(gettempdir(), 'aria_cli_{0}.log'.format(getuser()))
-# loggers log level to show
-logger_level = logging.INFO
-# loggers log level to show
-colors = True
-
-import_resolver = None
+from aria.utils import threading
 
 
-def load_configurations():
-    """
-    Dynamically load attributes into the config module from the ``config.yaml`` defined in the user
-    configuration directory
-    """
-    config_path = config_file_path()
-    with open(config_path) as config_file:
-        globals().update(safe_load(config_file) or {})
+class TestPluginManager(object):
+
+    def test_exception_raised_from_thread(self):
+
+        def error_raising_func():
+            raise ValueError('This is an error')
+
+        thread = threading.ExceptionThread(target=error_raising_func)
+        thread.start()
+        thread.join()
+
+        assert thread.is_error()
+        with pytest.raises(ValueError):
+            thread.raise_error_if_exists()

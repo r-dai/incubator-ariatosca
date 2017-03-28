@@ -40,7 +40,6 @@ from aria.orchestrator.workflows.builtin.workflows import (
 SERVICE_NAME = 'test_service_name'
 SERVICE_TEMPLATE_NAME = 'test_service_template_name'
 WORKFLOW_NAME = 'test_workflow_name'
-EXECUTION_NAME = 'test_execution_name'
 TASK_RETRY_INTERVAL = 1
 TASK_MAX_ATTEMPTS = 1
 
@@ -168,6 +167,13 @@ def create_interface_template(service_template, interface_name, operation_name,
 def create_interface(service, interface_name, operation_name, operation_kwargs=None,
                      interface_kwargs=None):
     the_type = service.service_template.interface_types.get_descendant('test_interface_type')
+
+    if operation_kwargs and operation_kwargs.get('inputs'):
+        wrapped_inputs = {}
+        for input_name, input_value in operation_kwargs['inputs'].iteritems():
+            wrapped_inputs[input_name] = models.Parameter.wrap(input_name, input_value)
+        operation_kwargs['inputs'] = wrapped_inputs
+
     operation = models.Operation(
         name=operation_name,
         **(operation_kwargs or {})
@@ -183,10 +189,11 @@ def create_interface(service, interface_name, operation_name, operation_kwargs=N
 def create_execution(service):
     return models.Execution(
         service=service,
-        status=models.Execution.STARTED,
+        status=models.Execution.PENDING,
         workflow_name=WORKFLOW_NAME,
+        created_at=datetime.utcnow(),
         started_at=datetime.utcnow(),
-        parameters=None
+        inputs={}
     )
 
 

@@ -68,17 +68,6 @@ class BaseContext(object):
         self._workdir = workdir
         self.logger = None
 
-    def _create_execution(self):
-        now = datetime.utcnow()
-        execution = self.model.execution.model_cls(
-            service_instance=self.service_instance,
-            workflow_name=self._workflow_name,
-            created_at=now,
-            parameters=self.parameters,
-        )
-        self.model.execution.put(execution)
-        return execution.id
-
     def _register_logger(self, logger_name=None, level=None, task_id=None):
         self.logger = self.PrefixedLogger(logging.getLogger(logger_name or self.__class__.__name__),
                                           self.logging_id,
@@ -168,13 +157,13 @@ class BaseContext(object):
         Download a blueprint resource from the resource storage
         """
         try:
-            self.resource.deployment.download(entry_id=str(self.service.id),
-                                              destination=destination,
-                                              path=path)
+            self.resource.service.download(entry_id=str(self.service.id),
+                                           destination=destination,
+                                           path=path)
         except exceptions.StorageError:
-            self.resource.blueprint.download(entry_id=str(self.service_template.id),
-                                             destination=destination,
-                                             path=path)
+            self.resource.service_template.download(entry_id=str(self.service_template.id),
+                                                    destination=destination,
+                                                    path=path)
 
     def download_resource_and_render(self, destination, path=None, variables=None):
         """
@@ -193,9 +182,9 @@ class BaseContext(object):
         Read a deployment resource as string from the resource storage
         """
         try:
-            return self.resource.deployment.read(entry_id=str(self.service.id), path=path)
+            return self.resource.service.read(entry_id=str(self.service.id), path=path)
         except exceptions.StorageError:
-            return self.resource.deployment.read(entry_id=str(self.service_template.id), path=path)
+            return self.resource.service_template.read(entry_id=str(self.service_template.id), path=path)
 
     def get_resource_and_render(self, path=None, variables=None):
         """
