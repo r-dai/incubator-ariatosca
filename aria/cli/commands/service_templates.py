@@ -61,8 +61,9 @@ def show(service_template_id, model_storage, logger):
     columns = SERVICE_TEMPLATE_COLUMNS + ['#services']
     print_data(columns, service_template_dict, 'Service-template:', max_width=50)
 
-    logger.info('Description:')
-    logger.info('{0}\n'.format(service_template_dict['description'].encode('UTF-8') or ''))
+    if service_template_dict['description'] is not None:
+        logger.info('Description:')
+        logger.info('{0}\n'.format(service_template_dict['description'].encode('UTF-8') or ''))
 
     logger.info('Existing services:')
     logger.info('{0}\n'.format(json.dumps([d['name'] for d in services])))
