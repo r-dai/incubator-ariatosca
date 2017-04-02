@@ -62,7 +62,7 @@ def show(node_template_id, model_storage, logger):
         logger.info('\tNo properties')
 
     # print node IDs
-    nodes = node_template.nodes.all()
+    nodes = node_template.nodes
     logger.info('Nodes:')
     if nodes:
         for node in nodes:

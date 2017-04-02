@@ -61,7 +61,7 @@ class Core(object):
 
     def delete_service_template(self, service_template_id):
         service_template = self.model_storage.service_template.get(service_template_id)
-        if service_template.services.all():
+        if service_template.services:
             raise exceptions.DependentServicesError(
                 "Can't delete service template {0} - Service template has existing services")
 
@@ -89,16 +89,14 @@ class Core(object):
     def delete_service(self, service_name, force=False):
         service = self.model_storage.service.get_by_name(service_name)
 
-        active_executions = [e for e in service.executions
-                             if e.status not in models.Execution.ACTIVE_STATES]
+        active_executions = [e for e in service.executions if e.is_active()]
         if active_executions:
             raise exceptions.DependentActiveExecutionsError(
                 "Can't delete service {0} - there is an active execution for this service. "
                 "Active execution id: {1}".format(service_name, active_executions[0].id))
 
         if not force:
-            available_nodes = [n for n in service.nodes.values()
-                               if n.state not in ('deleted', 'errored')]
+            available_nodes = [n for n in service.nodes.values() if n.is_available()]
             if available_nodes:
                 raise exceptions.DependentAvailableNodesError(
                     "Can't delete service {0} - there are available nodes for this service. "
