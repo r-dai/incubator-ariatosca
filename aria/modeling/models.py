@@ -26,6 +26,10 @@ from . import (
     mixins,
 )
 
+from sqlalchemy import (
+    Column,
+    Text
+)
 
 aria_declarative_base = declarative_base(cls=mixins.ModelIDMixin)
 
@@ -84,7 +88,7 @@ __all__ = (
 # region service template models
 
 class ServiceTemplate(aria_declarative_base, service_template.ServiceTemplateBase):
-    pass
+    name = Column(Text, index=True, unique=True)
 
 
 class NodeTemplate(aria_declarative_base, service_template.NodeTemplateBase):
@@ -137,7 +141,7 @@ class ArtifactTemplate(aria_declarative_base, service_template.ArtifactTemplateB
 # region service instance models
 
 class Service(aria_declarative_base, service_instance.ServiceBase):
-    pass
+    name = Column(Text, index=True, unique=True)
 
 
 class Node(aria_declarative_base, service_instance.NodeBase):

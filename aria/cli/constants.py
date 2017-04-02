@@ -16,3 +16,7 @@
 
 SAMPLE_SERVICE_TEMPLATE_FILENAME = 'service_template.yaml'
 HELP_TEXT_COLUMN_BUFFER = 5
+TWO_MODELS_WITH_THE_SAME_NAME_ERROR_TEMPLATE = """
+Could not store {model_class} `{name}`
+There already a exists a {model_class} with the same name
+"""
