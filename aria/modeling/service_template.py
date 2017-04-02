@@ -279,7 +279,7 @@ class ServiceTemplateBase(TemplateModelMixin):
             ('interface_types', formatting.as_raw(self.interface_types)),
             ('artifact_types', formatting.as_raw(self.artifact_types))))
 
-    def instantiate(self, container):
+    def instantiate(self, container, inputs=None):
         from . import models
         context = ConsumptionContext.get_thread_local()
         now = datetime.now()
@@ -287,8 +287,11 @@ class ServiceTemplateBase(TemplateModelMixin):
                                  updated_at=now,
                                  description=deepcopy_with_locators(self.description),
                                  service_template=self)
-
         context.modeling.instance = service
+
+        # utils.instantiate_dict(self, service.inputs, self.inputs)
+        service.inputs = utils.create_inputs(inputs or {}, self.inputs)
+        # TODO: now that we have inputs, we should scan properties and inputs and evaluate functions
 
         utils.instantiate_dict(self, service.meta_data, self.meta_data)
 
@@ -305,7 +308,6 @@ class ServiceTemplateBase(TemplateModelMixin):
         if self.substitution_template is not None:
             service.substitution = self.substitution_template.instantiate(container)
 
-        utils.instantiate_dict(self, service.inputs, self.inputs)
         utils.instantiate_dict(self, service.outputs, self.outputs)
 
         return service

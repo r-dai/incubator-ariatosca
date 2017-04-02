@@ -74,11 +74,7 @@ class Core(object):
         # creating an empty ConsumptionContext, initiating a threadlocal context
         ConsumptionContext()
         with self.model_storage._all_api_kwargs['session'].no_autoflush:
-            service = service_template.instantiate(None)
-
-        template_inputs = service_template.inputs
-        service.inputs = modeling_utils.create_inputs(inputs, template_inputs)
-        # TODO: now that we have inputs, we should scan properties and inputs and evaluate functions
+            service = service_template.instantiate(None, inputs)
 
         service.name = service_name or '{0}_{1}'.format(service_template_name, service.id)
         self.model_storage.service.put(service)
