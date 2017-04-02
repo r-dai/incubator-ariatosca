@@ -21,6 +21,7 @@ def validate_value_type(value, type_name):
     name_to_type = {
         'list': list,
         'dict': dict,
+        'tuple': tuple,
         'str': str,
         'unicode': str,
         'string': str,
