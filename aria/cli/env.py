@@ -109,7 +109,7 @@ class Environment(object):
         if not os.path.exists(self._plugins_dir):
             os.makedirs(self._plugins_dir)
 
-        return PluginManager(self._model_storage, self._plugins_dir)
+        return PluginManager(self.model_storage, self._plugins_dir)
 
 
 env = Environment(os.path.join(

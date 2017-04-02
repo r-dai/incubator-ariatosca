@@ -13,18 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import tarfile
+import zipfile
 
 from ..table import print_data
-from ..cli import helptexts, aria
+from ..cli import aria
 from ..exceptions import AriaCliError
 from ..utils import storage_sort_param
 
 
-PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
-                  'supported_platform', 'distribution_release', 'uploaded_at']
-EXCLUDED_COLUMNS = ['archive_name', 'distribution_version', 'excluded_wheels',
-                    'package_source', 'supported_py_versions', 'wheels']
+PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'supported_platform',
+                  'distribution', 'distribution_release', 'uploaded_at']
 
 
 @aria.group(name='plugins')
@@ -45,24 +43,23 @@ def validate(plugin_path, logger):
 
     This will try to validate the plugin's archive is not corrupted.
     A valid plugin is a wagon (http://github.com/cloudify-cosomo/wagon)
-    in the tar.gz format (suffix may also be .wgn).
+    in the zip format (suffix may also be .wgn).
 
     `PLUGIN_PATH` is the path to wagon archive to validate.
     """
     logger.info('Validating plugin {0}...'.format(plugin_path))
 
-    if not tarfile.is_tarfile(plugin_path):
+    if not zipfile.is_zipfile(plugin_path):
         raise AriaCliError(
             'Archive {0} is of an unsupported type. Only '
-            'tar.gz/wgn is allowed'.format(plugin_path))
-    with tarfile.open(plugin_path) as tar:
-        tar_members = tar.getmembers()
-        package_json_path = "{0}/{1}".format(
-            tar_members[0].name, 'package.json')
-        # TODO: Find a better way to validate a plugin.
+            'zip/wgn is allowed'.format(plugin_path))
+    with zipfile.ZipFile(plugin_path, 'r') as zip_file:
+        infos = zip_file.infolist()
         try:
-            tar.getmember(package_json_path)
-        except KeyError:
+            package_name = infos[0].filename[:infos[0].filename.index('/')]
+            package_json_path = "{0}/{1}".format(package_name, 'package.json')
+            zip_file.getinfo(package_json_path)
+        except (KeyError, ValueError, IndexError):
             raise AriaCliError(
                 'Failed to validate plugin {0} '
                 '(package.json was not found in archive)'.format(plugin_path))
@@ -70,20 +67,20 @@ def validate(plugin_path, logger):
     logger.info('Plugin validated successfully')
 
 
-@plugins.command(name='delete',
-                 short_help='Delete a plugin')
-@aria.argument('plugin-id')
-@aria.options.verbose()
-@aria.pass_model_storage
-@aria.pass_logger
-def delete(plugin_id, model_storage, logger):
-    """Delete a plugin
-
-    `PLUGIN_ID` is the id of the plugin to delete.
-    """
-    logger.info('Deleting plugin {0}...'.format(plugin_id))
-    model_storage.plugin.delete(plugin_id=plugin_id)
-    logger.info('Plugin deleted')
+# @plugins.command(name='delete',
+#                  short_help='Delete a plugin')
+# @aria.argument('plugin-id')
+# @aria.options.verbose()
+# @aria.pass_model_storage
+# @aria.pass_logger
+# def delete(plugin_id, model_storage, logger):
+#     """Delete a plugin
+#
+#     `PLUGIN_ID` is the id of the plugin to delete.
+#     """
+#     logger.info('Deleting plugin {0}...'.format(plugin_id))
+#     model_storage.plugin.delete(plugin_id=plugin_id)
+#     logger.info('Plugin deleted')
 
 
 @plugins.command(name='install',
@@ -91,13 +88,14 @@ def delete(plugin_id, model_storage, logger):
 @aria.argument('plugin-path')
 @aria.options.verbose()
 @aria.pass_context
+@aria.pass_plugin_manager
 @aria.pass_logger
-def install(ctx, plugin_path, logger):
+def install(ctx, plugin_path, plugin_manager, logger):
     """Install a plugin
 
     `PLUGIN_PATH` is the path to wagon archive to install.
     """
-    ctx.invoke(validate, plugin_path=plugin_path)
+    # ctx.invoke(validate, plugin_path=plugin_path)
     logger.info('Installing plugin {0}...'.format(plugin_path))
     plugin = plugin_manager.install(plugin_path)
     logger.info("Plugin installed. The plugin's id is {0}".format(plugin.id))
@@ -116,8 +114,7 @@ def show(plugin_id, model_storage, logger):
     """
     logger.info('Showing plugin {0}...'.format(plugin_id))
     plugin = model_storage.plugin.get(plugin_id)
-    _transform_plugin_response(plugin)
-    print_data(PLUGIN_COLUMNS, plugin, 'Plugin:')
+    print_data(PLUGIN_COLUMNS, plugin.to_dict(), 'Plugin:')
 
 
 @plugins.command(name='list',
@@ -131,15 +128,6 @@ def list(sort_by, descending, model_storage, logger):
     """List all plugins on the manager
     """
     logger.info('Listing all plugins...')
-    plugins_list = model_storage.plugin.list(
-        sort=storage_sort_param(sort_by, descending))
-    for plugin in plugins_list:
-        _transform_plugin_response(plugin)
-    print_data(PLUGIN_COLUMNS, plugins_list, 'Plugins:')
-
-
-def _transform_plugin_response(plugin):
-    """Remove any columns that shouldn't be displayed in the CLI
-    """
-    for column in EXCLUDED_COLUMNS:
-        plugin.pop(column, None)
+    plugins = [p.to_dict() for p in model_storage.plugin.list(
+        sort=storage_sort_param(sort_by, descending))]
+    print_data(PLUGIN_COLUMNS, plugins, 'Plugins:')
