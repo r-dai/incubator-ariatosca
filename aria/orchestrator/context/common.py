@@ -19,7 +19,6 @@ A common context for both workflow and operation
 
 import logging
 from contextlib import contextmanager
-from datetime import datetime
 from functools import partial
 
 import jinja2
@@ -68,13 +67,13 @@ class BaseContext(object):
         self._workdir = workdir
         self.logger = None
 
-    def _register_logger(self, logger_name=None, level=None, task_id=None):
-        self.logger = self.PrefixedLogger(logging.getLogger(logger_name or self.__class__.__name__),
-                                          self.logging_id,
-                                          task_id=task_id)
-        self.logger.addHandler(aria_logger.create_console_log_handler())
-        self.logger.addHandler(self._get_sqla_handler())
+    def _register_logger(self, level=None, task_id=None):
+        self.logger = self.PrefixedLogger(
+            logging.getLogger('aria.executions.task'), self.logging_id, task_id=task_id)
         self.logger.setLevel(level or logging.DEBUG)
+        if not self.logger.handlers:
+            self.logger.addHandler(aria_logger.create_console_log_handler())
+            self.logger.addHandler(self._get_sqla_handler())
 
     def _get_sqla_handler(self):
         api_kwargs = {}

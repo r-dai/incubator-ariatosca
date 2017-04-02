@@ -19,7 +19,6 @@ Workflow and operation contexts
 
 import threading
 from contextlib import contextmanager
-from datetime import datetime
 
 from .exceptions import ContextException
 from .common import BaseContext
