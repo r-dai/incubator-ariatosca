@@ -80,10 +80,8 @@ class Core(object):
         service.inputs = modeling_utils.create_inputs(inputs, template_inputs)
         # TODO: now that we have inputs, we should scan properties and inputs and evaluate functions
 
-        # first put the service model so it could have an id, as fallback for setting its name
-        self.model_storage.service.put(service)
         service.name = service_name or '{0}_{1}'.format(service_template_name, service.id)
-        self.model_storage.service.update(service)
+        self.model_storage.service.put(service)
         return service
 
     def delete_service(self, service_name, force=False):
