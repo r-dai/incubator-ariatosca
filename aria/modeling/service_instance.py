@@ -413,7 +413,6 @@ class NodeBase(InstanceModelMixin):
         except KeyError:
             return None
 
-    @property
     def is_available(self):
         return self.state not in [self.INITIAL, self.DELETED, self.ERROR]
 

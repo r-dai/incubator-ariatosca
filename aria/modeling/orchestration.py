@@ -98,13 +98,11 @@ class ExecutionBase(ModelMixin):
     status = Column(Enum(*STATES, name='execution_status'), default=PENDING)
     workflow_name = Column(Text)
 
-    @property
     def has_ended(self):
         return self.status in self.END_STATES
 
-    @property
     def is_active(self):
-        return not self.has_ended
+        return not self.has_ended()
 
     @declared_attr
     def logs(cls):
@@ -290,11 +288,9 @@ class TaskBase(ModelMixin):
     implementation = Column(String)
     _runs_on = Column(Enum(*RUNS_ON, name='runs_on'), name='runs_on')
 
-    @property
     def has_ended(self):
         return self.status in [self.SUCCESS, self.FAILED]
 
-    @property
     def is_waiting(self):
         return self.status in [self.PENDING, self.RETRYING]
 
