@@ -126,23 +126,24 @@ def store(service_template_path, service_template_name, model_storage, resource_
 
 @service_templates.command(name='delete',
                            short_help='Delete a service template')
-@aria.argument('service-template-id')
+@aria.argument('service-template-name')
 @aria.options.verbose()
 @aria.pass_model_storage
 @aria.pass_resource_storage
 @aria.pass_plugin_manager
 @aria.pass_logger
-def delete(service_template_id, model_storage, resource_storage, plugin_manager, logger):
+def delete(service_template_name, model_storage, resource_storage, plugin_manager, logger):
     """Delete a service template
-    `SERVICE_TEMPLATE_ID` is the id of the service template to delete.
+    `SERVICE_TEMPLATE_NAME` is the name of the service template to delete.
     """
-    logger.info('Deleting service template {0}...'.format(service_template_id))
+    logger.info('Deleting service template {0}...'.format(service_template_name))
+    service_template = model_storage.service_template.get_by_name(service_template_name)
     core = Core(model_storage, resource_storage, plugin_manager)
     try:
-        core.delete_service_template(service_template_id)
+        core.delete_service_template(service_template.id)
     except storage_exceptions.NotFoundError:
         raise AriaCliError()
-    logger.info('Service template {0} deleted'.format(service_template_id))
+    logger.info('Service template {0} deleted'.format(service_template_name))
 
 
 @service_templates.command(name='inputs',

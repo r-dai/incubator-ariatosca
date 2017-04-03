@@ -123,8 +123,9 @@ def delete(service_name, force, model_storage, resource_storage, plugin_manager,
     `SERVICE_NAME` is the name of the service to delete.
     """
     logger.info('Deleting service {0}...'.format(service_name))
+    service = model_storage.service.get_by_name(service_name)
     core = Core(model_storage, resource_storage, plugin_manager)
-    core.delete_service(service_name, force=force)
+    core.delete_service(service.id, force=force)
     logger.info('Service {0} deleted'.format(service_name))
 
 
