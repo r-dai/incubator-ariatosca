@@ -97,7 +97,8 @@ def create(service_template_name,
 
     try:
         core = Core(model_storage, resource_storage, plugin_manager)
-        service = core.create_service(service_template_name, inputs, service_name)
+        service_template = model_storage.service_template.get_by_name(service_template_name)
+        service = core.create_service(service_template.id, inputs, service_name)
     except storage_exceptions.StorageError as e:
         handle_storage_exception(e, 'service', service_name)
     except AriaException as e:
