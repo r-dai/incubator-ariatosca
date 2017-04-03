@@ -68,8 +68,7 @@ class WorkflowRunner(object):
             task_retry_interval=task_retry_interval)
 
         # transforming the execution inputs to dict, to pass them to the workflow function
-        execution_inputs_dict = {input.name: input.value for input in
-                                 self.execution.inputs.values()}
+        execution_inputs_dict = models.Parameter.unwrap_dict(self.execution.inputs)
         self._tasks_graph = workflow_fn(ctx=workflow_context, **execution_inputs_dict)
 
         self._engine = Engine(

@@ -88,6 +88,15 @@ class ParameterBase(TemplateModelMixin):
             console.puts(context.style.meta(self.description))
 
     @classmethod
+    def unwrap_dict(cls, parameters_dict):
+        """
+        Takes a parameters dict and simplifies it into key-value dict
+        :param parameters_dict: a parameter-name to parameter dict
+        :return: a parameter-name to parameter value dict
+        """
+        return dict((k, v.value) for k, v in parameters_dict.iteritems())
+
+    @classmethod
     def wrap(cls, name, value, description=None):
         """
         Wraps an arbitrary value as a parameter. The type will be guessed via introspection.
