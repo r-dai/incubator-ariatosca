@@ -13,15 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-import time
-
 from .. import utils
 from ..table import print_data
-from ..cli import aria, helptexts
+from ..cli import aria
 from ..exceptions import AriaCliError
 from ...modeling.models import Execution
-from ...storage.exceptions import StorageError
+from ...storage import exceptions as storage_exceptions
 from ...orchestrator.workflow_runner import WorkflowRunner
 from ...utils import formatting
 from ...utils import threading
@@ -52,7 +49,7 @@ def show(execution_id, model_storage, logger):
     try:
         logger.info('Showing execution {0}'.format(execution_id))
         execution = model_storage.execution.get(execution_id)
-    except StorageError:
+    except storage_exceptions.NotFoundError:
         raise AriaCliError('Execution {0} not found'.format(execution_id))
 
     print_data(EXECUTION_COLUMNS, execution.to_dict(), 'Execution:', max_width=50)
@@ -94,9 +91,8 @@ def list(service_name,
         try:
             service = model_storage.service.get_by_name(service_name)
             filters = dict(service=service)
-        except StorageError:
-            raise AriaCliError('Service {0} does not exist'.format(
-                service_name))
+        except storage_exceptions.NotFoundError:
+            raise AriaCliError('Service {0} does not exist'.format(service_name))
     else:
         logger.info('Listing all executions...')
         filters = {}

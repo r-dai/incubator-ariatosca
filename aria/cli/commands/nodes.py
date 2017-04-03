@@ -17,7 +17,7 @@ from .. import utils
 from ..cli import aria
 from ..table import print_data
 from ..exceptions import AriaCliError
-from ...storage.exceptions import StorageError
+from ...storage import exceptions as storage_exceptions
 
 
 NODE_COLUMNS = ['id', 'name', 'service_name', 'node_template_name', 'state']
@@ -45,7 +45,7 @@ def show(node_id, model_storage, logger):
     logger.info('Showing node {0}'.format(node_id))
     try:
         node = model_storage.node.get(node_id)
-    except StorageError:
+    except storage_exceptions.NotFoundError:
         raise AriaCliError('Node {0} not found'.format(node_id))
 
     print_data(NODE_COLUMNS, node.to_dict(), 'Node:', 50)
@@ -83,7 +83,7 @@ def list(service_name,
         try:
             service = model_storage.service.get_by_name(service_name)
             filters = dict(service=service)
-        except StorageError:
+        except storage_exceptions.NotFoundError:
             raise AriaCliError('Service {0} does not exist'.format(service_name))
     else:
         logger.info('Listing all nodes...')

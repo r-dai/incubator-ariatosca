@@ -25,7 +25,7 @@ from ..table import print_data
 from ..utils import storage_sort_param
 from ...core import Core
 from ...exceptions import AriaException
-from ...storage.exceptions import StorageError
+from ...storage import exceptions as storage_exceptions
 
 
 SERVICE_COLUMNS = ['id', 'name', 'service_template_name', 'created_at', 'updated_at']
@@ -40,27 +40,30 @@ def services():
 
 
 @services.command(name='list', short_help='List services')
-@aria.options.service_template_id()
+@aria.options.service_template_name()
 @aria.options.sort_by()
 @aria.options.descending
 @aria.options.verbose()
 @aria.pass_model_storage
 @aria.pass_logger
-def list(service_template_id,
+def list(service_template_name,
          sort_by,
          descending,
          model_storage,
          logger):
     """List services
 
-    If `--service-template-id` is provided, list services for that service template.
+    If `--service-template-name` is provided, list services for that service template.
     Otherwise, list services for all service templates.
     """
-    if service_template_id:
+    if service_template_name:
         logger.info('Listing services for service template {0}...'.format(
-            service_template_id))
-        service_template = model_storage.service_template.get(service_template_id)
-        filters = dict(service_template=service_template)
+            service_template_name))
+        try:
+            service_template = model_storage.service_template.get(service_template_name)
+            filters = dict(service_template=service_template)
+        except storage_exceptions.NotFoundError:
+            raise AriaCliError('Service template {0} does not exist'.format(service_template_name))
     else:
         logger.info('Listing all service...')
         filters = {}
@@ -99,7 +102,9 @@ def create(service_template_name,
     try:
         core = Core(model_storage, resource_storage, plugin_manager)
         service = core.create_service(service_template_name, inputs, service_name)
-    except StorageError:
+    except storage_exceptions.NotFoundError:
+        raise AriaCliError('Service template {0} does not exist'.format(service_template_name))
+    except storage_exceptions.StorageError:
         logger.info(TWO_MODELS_WITH_THE_SAME_NAME_ERROR_TEMPLATE.format(
             model_class='service',
             name=service_name))

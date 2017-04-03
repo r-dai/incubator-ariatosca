@@ -17,7 +17,7 @@ from ..table import print_data
 from .. import utils
 from ..cli import aria
 from ..exceptions import AriaCliError
-from ...storage.exceptions import StorageError
+from ...storage import exceptions as storage_exceptions
 
 
 NODE_TEMPLATE_COLUMNS = ['id', 'name', 'description', 'service_template_name', 'type_name']
@@ -49,7 +49,7 @@ def show(node_template_id, model_storage, logger):
     try:
         #TODO get node template of a specific service template instead?
         node_template = model_storage.node_template.get(node_template_id)
-    except StorageError:
+    except storage_exceptions.NotFoundError:
         raise AriaCliError('Node template {0} was not found'.format(node_template_id))
 
     print_data(NODE_TEMPLATE_COLUMNS, node_template.to_dict(), 'Node template:', max_width=50)
@@ -91,7 +91,7 @@ def list(service_template_name, sort_by, descending, model_storage, logger):
         try:
             service_template = model_storage.service_template.get_by_name(service_template_name)
             filters = dict(service_template=service_template)
-        except StorageError:
+        except storage_exceptions.NotFoundException:
             raise AriaCliError('Service template {0} does not exist'.format(service_template_name))
     else:
         logger.info('Listing all node templates...')

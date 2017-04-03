@@ -15,6 +15,8 @@
 
 from .. import utils
 from ..cli import aria
+from ..exceptions import AriaCliError
+from ...storage import exceptions as storage_exceptions
 
 
 @aria.group(name='logs')
@@ -40,8 +42,12 @@ def list(execution_id,
     """
     logger.info('Listing logs for execution id {0}'.format(execution_id))
     # events_logger = get_events_logger(json_output)
-    logs = model_storage.log.list(filters=dict(execution_fk=execution_id),
-                                  sort=utils.storage_sort_param('created_at', False))
+    try:
+        logs = model_storage.log.list(filters=dict(execution_fk=execution_id),
+                                      sort=utils.storage_sort_param('created_at', False))
+    except storage_exceptions.NotFoundError:
+        raise AriaCliError('Execution {0} does not exist'.format(execution_id))
+
     # TODO: print logs nicely
     if logs:
         for log in logs:
@@ -62,7 +68,11 @@ def delete(execution_id, model_storage, logger):
     `EXECUTION_ID` is the execution logs to delete.
     """
     logger.info('Deleting logs for execution id {0}'.format(execution_id))
-    logs = model_storage.log.list(filters=dict(execution_fk=execution_id))
+    try:
+        logs = model_storage.log.list(filters=dict(execution_fk=execution_id))
+    except storage_exceptions.NotFoundError:
+        raise AriaCliError('Execution {0} does not exist'.format(execution_id))
+
     for log in logs:
         model_storage.log.delete(log)
     logger.info('Deleted logs for execution id {0}'.format(execution_id))
