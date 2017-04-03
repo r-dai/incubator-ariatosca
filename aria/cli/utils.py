@@ -153,7 +153,7 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
 
 
 def handle_storage_exception(e, model_class, name):
-    if 'UNIQUE constraint failed' in e.msg:
+    if 'UNIQUE constraint failed' in e.message:
         msg = 'Could not store {model_class} `{name}`\n' \
               'There already a exists a {model_class} with the same name' \
               .format(model_class=model_class, name=name)
