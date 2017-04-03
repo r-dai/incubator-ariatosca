@@ -14,8 +14,6 @@
 # limitations under the License.
 
 from . import exceptions
-from .modeling import models
-from .modeling import utils as modeling_utils
 from .parser.consumption import (
     ConsumptionContext,
     ConsumerChain,
@@ -68,33 +66,33 @@ class Core(object):
         self.model_storage.service_template.delete(service_template)
         self.resource_storage.service_template.delete(entry_id=str(service_template.id))
 
-    def create_service(self, service_template_name, inputs, service_name=None):
-        service_template = self.model_storage.service_template.get_by_name(service_template_name)
+    def create_service(self, service_template_id, inputs, service_name=None):
+        service_template = self.model_storage.service_template.get(service_template_id)
 
         # creating an empty ConsumptionContext, initiating a threadlocal context
         ConsumptionContext()
         with self.model_storage._all_api_kwargs['session'].no_autoflush:
             service = service_template.instantiate(None, inputs)
 
-        service.name = service_name or '{0}_{1}'.format(service_template_name, service.id)
+        service.name = service_name or '{0}_{1}'.format(service_template.name, service.id)
         self.model_storage.service.put(service)
         return service
 
-    def delete_service(self, service_name, force=False):
-        service = self.model_storage.service.get_by_name(service_name)
+    def delete_service(self, service_id, force=False):
+        service = self.model_storage.service.get(service_id)
 
         active_executions = [e for e in service.executions if e.is_active()]
         if active_executions:
             raise exceptions.DependentActiveExecutionsError(
                 "Can't delete service {0} - there is an active execution for this service. "
-                "Active execution id: {1}".format(service_name, active_executions[0].id))
+                "Active execution id: {1}".format(service.name, active_executions[0].id))
 
         if not force:
             available_nodes = [n for n in service.nodes.values() if n.is_available()]
             if available_nodes:
                 raise exceptions.DependentAvailableNodesError(
                     "Can't delete service {0} - there are available nodes for this service. "
-                    "Available node ids: {1}".format(service_name, available_nodes))
+                    "Available node ids: {1}".format(service.name, available_nodes))
 
         self.model_storage.service.delete(service)
 

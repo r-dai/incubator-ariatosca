@@ -14,10 +14,8 @@
 # limitations under the License.
 
 from ..table import print_data
-from .. import utils
 from ..cli import aria
 from ..exceptions import AriaCliError
-from ...storage.exceptions import StorageError
 
 WORKFLOW_COLUMNS = ['name', 'service_template_name', 'service_name']
 
@@ -41,17 +39,14 @@ def show(workflow_name, service_name, model_storage, logger):
 
     `WORKFLOW_NAME` is the name of the workflow to get information on.
     """
-    try:
-        logger.info('Retrieving workflow {0} for service {1}'.format(
-            workflow_name, service_name))
-        service = model_storage.service.get(service_name)
-        workflow = next((wf for wf in service.workflows if
-                         wf.name == workflow_name), None)
-        if not workflow:
-            raise AriaCliError(
-                'Workflow {0} not found for service {1}'.format(workflow_name, service_name))
-    except StorageError:
-        raise AriaCliError('service {0} not found'.format(service_name))
+    logger.info('Retrieving workflow {0} for service {1}'.format(
+        workflow_name, service_name))
+    service = model_storage.service.get(service_name)
+    workflow = next((wf for wf in service.workflows if
+                     wf.name == workflow_name), None)
+    if not workflow:
+        raise AriaCliError(
+            'Workflow {0} not found for service {1}'.format(workflow_name, service_name))
 
     defaults = {
         'service_template_name': service.service_template_name,

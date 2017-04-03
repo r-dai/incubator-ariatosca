@@ -59,11 +59,8 @@ def list(service_template_name,
     if service_template_name:
         logger.info('Listing services for service template {0}...'.format(
             service_template_name))
-        try:
-            service_template = model_storage.service_template.get(service_template_name)
-            filters = dict(service_template=service_template)
-        except storage_exceptions.NotFoundError:
-            raise AriaCliError('Service template {0} does not exist'.format(service_template_name))
+        service_template = model_storage.service_template.get(service_template_name)
+        filters = dict(service_template=service_template)
     else:
         logger.info('Listing all service...')
         filters = {}
@@ -102,8 +99,6 @@ def create(service_template_name,
     try:
         core = Core(model_storage, resource_storage, plugin_manager)
         service = core.create_service(service_template_name, inputs, service_name)
-    except storage_exceptions.NotFoundError:
-        raise AriaCliError('Service template {0} does not exist'.format(service_template_name))
     except storage_exceptions.StorageError:
         logger.info(TWO_MODELS_WITH_THE_SAME_NAME_ERROR_TEMPLATE.format(
             model_class='service',
