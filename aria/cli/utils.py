@@ -150,3 +150,12 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
             sys.stdout.write('\n')
 
     return print_progress
+
+
+def handle_storage_exception(e, model_class, name):
+    if 'UNIQUE constraint failed' in e.msg:
+        msg = 'Could not store {model_class} `{name}`\n' \
+              'There already a exists a {model_class} with the same name' \
+              .format(model_class=model_class, name=name)
+        raise AriaCliError(msg)
+    raise

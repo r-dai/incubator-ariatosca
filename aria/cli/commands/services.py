@@ -19,10 +19,9 @@ from StringIO import StringIO
 
 from . import service_templates
 from ..cli import aria, helptexts
-from ..constants import TWO_MODELS_WITH_THE_SAME_NAME_ERROR_TEMPLATE
 from ..exceptions import AriaCliError
 from ..table import print_data
-from ..utils import storage_sort_param
+from ..utils import storage_sort_param, handle_storage_exception
 from ...core import Core
 from ...exceptions import AriaException
 from ...storage import exceptions as storage_exceptions
@@ -99,16 +98,12 @@ def create(service_template_name,
     try:
         core = Core(model_storage, resource_storage, plugin_manager)
         service = core.create_service(service_template_name, inputs, service_name)
-    except storage_exceptions.StorageError:
-        logger.info(TWO_MODELS_WITH_THE_SAME_NAME_ERROR_TEMPLATE.format(
-            model_class='service',
-            name=service_name))
-        raise
+    except storage_exceptions.StorageError as e:
+        handle_storage_exception(e, 'service', service_name)
     except AriaException as e:
         logger.info(str(e))
         service_templates.print_service_template_inputs(model_storage, service_template_name)
         raise AriaCliError(str(e))
-
     logger.info("Service created. The service's name is {0}".format(service.name))
 
 

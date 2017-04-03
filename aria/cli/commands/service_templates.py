@@ -21,9 +21,9 @@ from .. import utils
 from .. import csar
 from .. import service_template_utils
 from ..cli import aria
-from ..constants import TWO_MODELS_WITH_THE_SAME_NAME_ERROR_TEMPLATE
 from ..table import print_data
 from ..exceptions import AriaCliError
+from ..utils import handle_storage_exception
 from ...core import Core
 from ...exceptions import AriaException
 from ...storage import exceptions as storage_exceptions
@@ -119,14 +119,9 @@ def store(service_template_path, service_template_name, model_storage, resource_
         core.create_service_template(service_template_path,
                                      os.path.dirname(service_template_path),
                                      service_template_name)
-    except storage_exceptions.StorageError:
-        logger.info(TWO_MODELS_WITH_THE_SAME_NAME_ERROR_TEMPLATE.format(
-            model_class='service template',
-            name=service_template_name))
-        raise
-
-    else:
-        logger.info('Service template stored')
+    except storage_exceptions.StorageError as e:
+        handle_storage_exception(e, 'service template', service_template_name)
+    logger.info('Service template stored')
 
 
 @service_templates.command(name='delete',
