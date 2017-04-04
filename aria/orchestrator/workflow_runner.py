@@ -42,6 +42,18 @@ class WorkflowRunner(object):
                  model_storage, resource_storage, plugin_manager,
                  executor=None, task_max_attempts=DEFAULT_TASK_MAX_ATTEMPTS,
                  task_retry_interval=DEFAULT_TASK_RETRY_INTERVAL):
+        """
+        Manages a single workflow execution on a given service
+        :param workflow_name: Workflow name
+        :param service_id: Service id
+        :param inputs: A key-value dict of inputs for the execution
+        :param model_storage: Model storage
+        :param resource_storage: Resource storage
+        :param plugin_manager: Plugin manager
+        :param executor: Executor for tasks. Defaults to a ProcessExecutor instance.
+        :param task_max_attempts: Maximum attempts of repeating each failing task
+        :param task_retry_interval: Retry interval in between retry attempts of a failing task
+        """
 
         self._model_storage = model_storage
         self._workflow_name = workflow_name
@@ -54,7 +66,7 @@ class WorkflowRunner(object):
 
         workflow_fn = self._get_workflow_fn()
 
-        execution = self._create_execution_models(inputs)
+        execution = self._create_execution_model(inputs)
         self._execution_id = execution.id
 
         workflow_context = WorkflowContext(
@@ -93,7 +105,7 @@ class WorkflowRunner(object):
     def cancel(self):
         self._engine.cancel_execution()
 
-    def _create_execution_models(self, inputs):
+    def _create_execution_model(self, inputs):
         execution = models.Execution(
             created_at=datetime.utcnow(),
             service=self.service,
