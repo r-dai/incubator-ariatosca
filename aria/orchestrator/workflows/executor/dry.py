@@ -40,7 +40,7 @@ class DryExecutor(BaseExecutor):
         implementation += task.implementation
         inputs = Parameter.unwrap_dict(task.inputs)
 
-        self.logger.info(
+        task.context.logger.info(
             'Executing {actor_type} {actor_name} operation {interface_name} {operation_name}: '
             '{implementation} (Inputs: {inputs})'
             .format(actor_type=actor_type, actor_name=task.actor.name,
