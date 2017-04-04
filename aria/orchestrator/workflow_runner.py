@@ -119,9 +119,7 @@ class WorkflowRunner(object):
                                 .format(self._workflow_name, self.service.name))
 
     def _validate_no_active_executions(self):
-        active_executions_filter = dict(service=self.service,
-                                        status=models.Execution.ACTIVE_STATES)
-        active_executions = self._model_storage.execution.list(filter=active_executions_filter)
+        active_executions = [e for e in self.service.executions if e.is_active()]
         if active_executions:
             raise AriaException("Can't start execution; Service {0} has a running "
                                 "execution with id {1}"
