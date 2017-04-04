@@ -21,6 +21,7 @@ from .parser.consumption import (
     Validate,
     ServiceTemplate)
 from .parser.loading.location import UriLocation
+from .storage import exceptions as storage_exceptions
 
 
 class Core(object):
@@ -67,6 +68,7 @@ class Core(object):
         self.resource_storage.service_template.delete(entry_id=str(service_template.id))
 
     def create_service(self, service_template_id, inputs, service_name=None):
+
         service_template = self.model_storage.service_template.get(service_template_id)
 
         # creating an empty ConsumptionContext, initiating a threadlocal context
@@ -74,8 +76,17 @@ class Core(object):
         with self.model_storage._all_api_kwargs['session'].no_autoflush:
             service = service_template.instantiate(None, inputs)
 
-        service.name = service_name or '{0}_{1}'.format(service_template.name, service.id)
+        # If the user didn't enter a name for this service, we'll want to auto generate it.
+        # But how will we ensure a unique but simple name? We'll append the services' unique id
+        # to the service_templates name. Since this service is not in the storage yet, we'll put it
+        # there, and pull out its id.
         self.model_storage.service.put(service)
+        service.name = service_name or '{0}_{1}'.format(service_template.name, service.id)
+        try:
+            self.model_storage.service.update(service)
+        except storage_exceptions.StorageError:
+            self.model_storage.service.delete(service)
+            raise
         return service
 
     def delete_service(self, service_id, force=False):
