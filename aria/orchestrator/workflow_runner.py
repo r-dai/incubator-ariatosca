@@ -38,17 +38,17 @@ WORKFLOW_POLICY_INTERNAL_PROPERTIES = ('implementation', 'dependencies')
 
 class WorkflowRunner(object):
 
-    def __init__(self, workflow_name, service_name, inputs,
+    def __init__(self, workflow_name, service_id, inputs,
                  model_storage, resource_storage, plugin_manager,
                  executor=None, task_max_attempts=DEFAULT_TASK_MAX_ATTEMPTS,
                  task_retry_interval=DEFAULT_TASK_RETRY_INTERVAL):
 
         self._model_storage = model_storage
         self._workflow_name = workflow_name
-        service = model_storage.service.get_by_name(service_name)
+
         # the IDs are stored rather than the models themselves, so this module could be used
         # by several threads without raising errors on model objects shared between threads
-        self._service_id = service.id
+        self._service_id = service_id
 
         self._validate_workflow_exists_for_service()
 
@@ -61,7 +61,7 @@ class WorkflowRunner(object):
             name=self.__class__.__name__,
             model_storage=self._model_storage,
             resource_storage=resource_storage,
-            service_id=service.id,
+            service_id=service_id,
             execution_id=execution.id,
             workflow_name=workflow_name,
             task_max_attempts=task_max_attempts,

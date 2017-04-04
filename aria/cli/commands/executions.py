@@ -124,10 +124,11 @@ def start(workflow_name,
 
     `WORKFLOW_NAME` is the name of the workflow to execute (e.g. `uninstall`)
     """
+    service = model_storage.service.get_by_name(service_name)
     executor = DryExecutor() if dry else None  # use WorkflowRunner's default executor
 
     workflow_runner = \
-        WorkflowRunner(workflow_name, service_name, inputs,
+        WorkflowRunner(workflow_name, service.id, inputs,
                        model_storage, resource_storage, plugin_manager,
                        executor, task_max_attempts, task_retry_interval)
 
