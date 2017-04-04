@@ -150,7 +150,7 @@ def start(workflow_name,
 
     execution = workflow_runner.execution
     logger.info('Execution has ended with "{0}" status'.format(execution.status))
-    if execution.status == Execution.FAILED:
+    if execution.status == Execution.FAILED and execution.error:
         logger.info('Execution error:\n{0}'.format(execution.error))
 
     if dry:
