@@ -18,6 +18,7 @@ from ..table import print_data
 from ..cli import aria
 from ...modeling.models import Execution
 from ...orchestrator.workflow_runner import WorkflowRunner
+from ...orchestrator.workflows.executor.dry import DryExecutor
 from ...utils import formatting
 from ...utils import threading
 
@@ -101,6 +102,7 @@ def list(service_name,
 @aria.argument('workflow-name')
 @aria.options.service_name(required=True)
 @aria.options.inputs
+@aria.options.dry_execution
 @aria.options.task_max_attempts()
 @aria.options.task_retry_interval()
 @aria.options.verbose()
@@ -111,6 +113,7 @@ def list(service_name,
 def start(workflow_name,
           service_name,
           inputs,
+          dry,
           task_max_attempts,
           task_retry_interval,
           model_storage,
@@ -119,19 +122,21 @@ def start(workflow_name,
           logger):
     """Execute a workflow
 
-    `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
+    `WORKFLOW_NAME` is the name of the workflow to execute (e.g. `uninstall`)
     """
+    executor = DryExecutor() if dry else None  # use WorkflowRunner's default executor
+
     workflow_runner = \
         WorkflowRunner(workflow_name, service_name, inputs,
                        model_storage, resource_storage, plugin_manager,
-                       task_max_attempts, task_retry_interval)
+                       executor, task_max_attempts, task_retry_interval)
 
     execution_thread_name = '{0}_{1}'.format(service_name, workflow_name)
     execution_thread = threading.ExceptionThread(target=workflow_runner.execute,
                                                  name=execution_thread_name)
     execution_thread.daemon = True  # allows force-cancel to exit immediately
 
-    logger.info('Starting execution. Press Ctrl+C cancel')
+    logger.info('Starting {0}execution. Press Ctrl+C cancel'.format('dry ' if dry else ''))
     execution_thread.start()
     try:
         while execution_thread.is_alive():
@@ -147,6 +152,10 @@ def start(workflow_name,
     logger.info('Execution has ended with "{0}" status'.format(execution.status))
     if execution.status == Execution.FAILED:
         logger.info('Execution error:\n{0}'.format(execution.error))
+
+    if dry:
+        # remove traces of the dry execution (including tasks, logs, inputs..)
+        model_storage.execution.delete(execution)
 
 
 def _cancel_execution(workflow_runner, execution_thread, logger):

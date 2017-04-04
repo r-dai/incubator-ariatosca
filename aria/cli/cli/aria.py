@@ -304,6 +304,11 @@ class Options(object):
             is_flag=True,
             help=helptexts.JSON_OUTPUT)
 
+        self.dry_execution = click.option(
+            '--dry',
+            is_flag=True,
+            help=helptexts.DRY_EXECUTION)
+
         self.init_hard_reset = click.option(
             '--hard',
             is_flag=True,

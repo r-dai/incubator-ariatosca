@@ -32,6 +32,8 @@ HARD_RESET = "Hard reset the configuration, including coloring and loggers"
 ENABLE_COLORS = "Enable colors in logger (use --hard when working with" \
                 " an initialized environment) [default: False]"
 
+DRY_EXECUTION = "Execute a workflow dry run (prints operations information without causing side " \
+                "effects)"
 SERVICE_TEMPLATE_FILENAME = (
     "The name of the archive's main service template file. "
     "This is only relevant if uploading an archive")

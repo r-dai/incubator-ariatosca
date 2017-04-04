@@ -40,7 +40,7 @@ class WorkflowRunner(object):
 
     def __init__(self, workflow_name, service_name, inputs,
                  model_storage, resource_storage, plugin_manager,
-                 task_max_attempts=DEFAULT_TASK_MAX_ATTEMPTS,
+                 executor=None, task_max_attempts=DEFAULT_TASK_MAX_ATTEMPTS,
                  task_retry_interval=DEFAULT_TASK_RETRY_INTERVAL):
 
         self._model_storage = model_storage
@@ -71,8 +71,9 @@ class WorkflowRunner(object):
         execution_inputs_dict = models.Parameter.unwrap_dict(self.execution.inputs)
         self._tasks_graph = workflow_fn(ctx=workflow_context, **execution_inputs_dict)
 
+        executor = executor or ProcessExecutor(plugin_manager=plugin_manager)
         self._engine = Engine(
-            executor=ProcessExecutor(plugin_manager=plugin_manager),
+            executor=executor,
             workflow_context=workflow_context,
             tasks_graph=self._tasks_graph)
 
