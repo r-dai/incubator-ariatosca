@@ -47,14 +47,23 @@ class AriaException(Exception):
 
 
 class DependentServicesError(AriaError):
+    """
+    Raised when attempting to delete a service template which has existing services
+    """
     pass
 
 
 class DependentActiveExecutionsError(AriaError):
+    """
+    Raised when attempting to delete a service which has active executions
+    """
     pass
 
 
 class DependentAvailableNodesError(AriaError):
+    """
+    Raised when attempting to delete a service which has available nodes
+    """
     pass
 
 

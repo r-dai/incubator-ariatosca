@@ -17,14 +17,15 @@
 Workflow runner
 """
 
+import os
 import sys
 from datetime import datetime
 
+from . import exceptions
 from .context.workflow import WorkflowContext
 from .workflows.builtin import BUILTIN_WORKFLOWS, BUILTIN_WORKFLOWS_PATH_PREFIX
 from .workflows.core.engine import Engine
 from .workflows.executor.process import ProcessExecutor
-from ..exceptions import AriaException
 from ..modeling import utils as modeling_utils
 from ..modeling import models
 from ..utils.imports import import_fullname
@@ -56,6 +57,7 @@ class WorkflowRunner(object):
         """
 
         self._model_storage = model_storage
+        self._resource_storage = resource_storage
         self._workflow_name = workflow_name
 
         # the IDs are stored rather than the models themselves, so this module could be used
@@ -127,15 +129,16 @@ class WorkflowRunner(object):
     def _validate_workflow_exists_for_service(self):
         if self._workflow_name not in self.service.workflows and \
                         self._workflow_name not in BUILTIN_WORKFLOWS:
-            raise AriaException('No workflow policy {0} declared in service instance {1}'
-                                .format(self._workflow_name, self.service.name))
+            raise exceptions.UndeclaredWorkflowError(
+                'No workflow policy {0} declared in service {1}'
+                .format(self._workflow_name, self.service.name))
 
     def _validate_no_active_executions(self):
         active_executions = [e for e in self.service.executions if e.is_active()]
         if active_executions:
-            raise AriaException("Can't start execution; Service {0} has a running "
-                                "execution with id {1}"
-                                .format(self.service.name, active_executions[0].id))
+            raise exceptions.ActiveExecutionsError(
+                "Can't start execution; Service {0} has a running execution with id {1}"
+                .format(self.service.name, active_executions[0].id))
 
     def _get_workflow_fn(self):
         if self._workflow_name in BUILTIN_WORKFLOWS:
@@ -144,14 +147,20 @@ class WorkflowRunner(object):
 
         workflow = self.service.workflows[self._workflow_name]
 
-        try:
-            # TODO: perhaps pass to import_fullname as paths instead of appending to sys path?
-            # TODO: revisit; workflow.implementation to be used instead?
-            sys.path.append(workflow.properties['implementation'].value)
-            # sys.path.append(os.path.dirname(str(context.presentation.location)))
-        except KeyError:
-            # no implementation field - a script has been provided directly
-            pass
+        # TODO: Custom workflow support needs improvement, currently this code uses internal
+        # knowledge of the resource storage; Instead, workflows should probably be loaded
+        # in a similar manner to operation plugins. Also consider passing to import_fullname
+        # as paths instead of appending to sys path.
+        service_template_resources_path = os.path.join(
+            self._resource_storage.service_template.base_path,
+            str(self.service.service_template.id))
+        sys.path.append(service_template_resources_path)
 
-        workflow_fn = import_fullname(workflow.properties['implementation'].value)
+        try:
+            workflow_fn = import_fullname(workflow.implementation)
+        except ImportError:
+            raise exceptions.WorkflowImplementationNotFoundError(
+                'Could not find workflow {0} implementation at {1}'.format(
+                    self._workflow_name, workflow.implementation))
+
         return workflow_fn
