@@ -21,11 +21,15 @@ pypiwin32==219 ; sys_platform == 'win32'
 appdirs==1.4.3            # via setuptools
 args==0.1.0               # via clint
 asn1crypto==0.22.0        # via cryptography
+backports.shutil_get_terminal_size==1.0.0
 blinker==1.4
 bottle==0.12.13
 cachecontrol[filecache]==0.12.1
 cffi==1.10.0              # via cryptography
+click==4.1
+click_didyoumean==0.0.3
 clint==0.5.1
+colorama==0.3.4
 cryptography==1.8.1       # via paramiko
 decorator==4.0.11         # via networkx
 enum34==1.1.6             # via cryptography
@@ -40,6 +44,7 @@ msgpack-python==0.4.8     # via cachecontrol
 networkx==1.9.1
 packaging==16.8           # via cryptography, setuptools
 paramiko==2.1.2           # via fabric
+prettytable==0.7.2
 pyasn1==0.2.3             # via paramiko
 pycparser==2.17           # via cffi
 pyparsing==2.2.0          # via packaging
