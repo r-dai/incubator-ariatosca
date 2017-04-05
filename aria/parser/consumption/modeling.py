@@ -106,7 +106,7 @@ class InstantiateServiceInstance(Consumer):
                                            'model')
             return
 
-        self.context.modeling.template.instantiate(None)
+        self.context.modeling.template.instantiate(None, dict(self.context.modeling.inputs))
 
 
 class CoerceServiceInstanceValues(Consumer):

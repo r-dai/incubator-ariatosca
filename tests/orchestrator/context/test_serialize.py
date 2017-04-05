@@ -99,10 +99,3 @@ def context(tmpdir):
 
     yield result
     storage.release_sqlite_storage(result.model)
-
-
-@pytest.fixture
-def memory_model_storage():
-    result = aria.application_model_storage(sql_mapi.SQLAlchemyModelAPI)
-    yield result
-    storage.release_sqlite_storage(result)

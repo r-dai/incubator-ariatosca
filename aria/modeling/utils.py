@@ -78,7 +78,10 @@ def _merge_and_validate_inputs(inputs, template_inputs):
         else:
             # Validate input type
             try:
-                validate_value_type(inputs[input_name], input_template.type_name)
+                # TODO: improve type validation; Needs to consider custom data_types as well
+                if input_template.type_name in ('list', 'dict', 'tuple', 'string', 'integer',
+                                                'boolean', 'float'):
+                    validate_value_type(inputs[input_name], input_template.type_name)
             except ValueError:
                 wrong_type_inputs[input_name] = input_template.type_name
 
