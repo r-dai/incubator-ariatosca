@@ -15,7 +15,6 @@
 
 
 import os
-import json
 
 from .. import utils
 from .. import csar
@@ -66,7 +65,7 @@ def show(service_template_id, model_storage, logger):
         logger.info('{0}\n'.format(service_template_dict['description'].encode('UTF-8') or ''))
 
     logger.info('Existing services:')
-    logger.info('{0}\n'.format(json.dumps([d['name'] for d in services])))
+    logger.info('{0}\n'.format([s['name'] for s in services]))
 
 
 @service_templates.command(name='list',
@@ -122,7 +121,7 @@ def store(service_template_path, service_template_name, model_storage, resource_
                                      service_template_name)
     except storage_exceptions.StorageError as e:
         handle_storage_exception(e, 'service template', service_template_name)
-    logger.info('Service template stored')
+    logger.info('Service template {0} stored'.format(service_template_name))
 
 
 @service_templates.command(name='delete',

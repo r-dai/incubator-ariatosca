@@ -2,10 +2,10 @@ import aria.cli.commands as commands
 import click.testing
 
 
-def invoke(command):
-    # TODO handle verbosity later
-    command_string = ['service_templates', 'show', '1']
-    command, sub, args = command_string[0], command_string[1], command_string[2:]
+def invoke(command_string):
+    # TODO handle verbosity and co. later
+    command_list = command_string.split()
+    command, sub, args = command_list[0], command_list[1], command_list[2:]
     runner = click.testing.CliRunner()
     outcome = runner.invoke(getattr(
         getattr(commands, command), sub), args)

@@ -17,7 +17,6 @@ from . import (
     executions,
     logs,
     node_templates,
-    node_templates,
     nodes,
     plugins,
     service_templates,
