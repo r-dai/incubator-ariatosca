@@ -141,3 +141,25 @@ class TestServiceTemplatesStore(TestCliBase):
             expected_exception=AriaCliError,
             expected_msg='Could not store service template `test_st`\n'
                          'There already a exists a service template with the same name')
+
+
+class TestServiceTemplatesDelete(TestCliBase):
+
+    def test_delete_no_exception(self, monkeypatch, mock_object):
+
+        monkeypatch.setattr(Environment, 'model_storage', mock_object)
+        monkeypatch.setattr(Core, 'delete_service_template', mock_object)
+        self.invoke('service_templates delete test_st')
+        assert 'Service template test_st deleted' in self.logger_output_string
+
+    def test_delete_raises_exception(self, monkeypatch, mock_object):
+
+        monkeypatch.setattr(Environment, 'model_storage', mock_object)
+        monkeypatch.setattr(Core,
+                            'delete_service_template',
+                            raise_exception(storage_exceptions.NotFoundError))
+
+        assert_exception_raised(
+            self.invoke('service_templates delete test_st'),
+            expected_exception=AriaCliError,
+            expected_msg='')
