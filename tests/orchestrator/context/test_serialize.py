@@ -15,8 +15,6 @@
 
 import pytest
 
-import aria
-from aria.storage import sql_mapi
 from aria.orchestrator.workflows import api
 from aria.orchestrator.workflows.core import engine
 from aria.orchestrator.workflows.executor import process

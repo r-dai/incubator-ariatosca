@@ -482,9 +482,10 @@ if __name__ == '__main__':
                 node.service,
                 'test',
                 'op',
-                operation_kwargs=dict(implementation='{0}.{1}'.format(
-                    operations.__name__,
-                    operations.run_script_locally.__name__),
+                operation_kwargs=dict(
+                    implementation='{0}.{1}'.format(
+                        operations.__name__,
+                        operations.run_script_locally.__name__),
                     inputs=inputs)
             )
             node.interfaces[interface.name] = interface

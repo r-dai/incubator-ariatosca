@@ -28,7 +28,11 @@ from aria.orchestrator.workflows.executor import process
 
 import tests.storage
 import tests.resources
-from tests.fixtures import plugins_dir, plugin_manager, fs_model as model
+from tests.fixtures import (  # pylint: disable=unused-import
+    plugins_dir,
+    plugin_manager,
+    fs_model as model
+)
 
 
 class TestProcessExecutor(object):
