@@ -169,8 +169,7 @@ def inputs(service_template_name, model_storage, logger):
 @aria.pass_resource_storage
 @aria.pass_plugin_manager
 @aria.pass_logger
-def validate_service_template(service_template, model_storage, resource_storage, plugin_manager,
-                              logger):
+def validate(service_template, model_storage, resource_storage, plugin_manager, logger):
     """Validate a service template
 
     `SERVICE_TEMPLATE` is the path or url of the service template or archive to validate.

@@ -2,6 +2,7 @@ from aria.cli import service_template_utils
 from aria.cli.env import Environment
 from aria.cli.exceptions import AriaCliError
 from aria.core import Core
+from aria.exceptions import AriaException
 from aria.storage import exceptions as storage_exceptions
 from tests.cli.base_test import TestCliBase, assert_exception_raised, raise_exception
 from tests.mock import models
@@ -198,3 +199,19 @@ class TestServiceTemplatesInputs(TestCliBase):
         monkeypatch.setattr(Environment, 'model_storage', MockStorage())
         self.invoke('service_templates inputs without_inputs')
         assert 'No inputs' in self.logger_output_string
+
+
+class TestServiceTemplatesValidate(TestCliBase):
+
+    def test_validate_no_exception(self, monkeypatch, mock_object):
+        monkeypatch.setattr(Core, 'validate_service_template', mock_object)
+        monkeypatch.setattr(service_template_utils, 'get', mock_object)
+        self.invoke('service_templates validate stubpath')
+        assert 'Service template validated successfully' in self.logger_output_string
+
+    def test_validate_raises_exception(self, monkeypatch, mock_object):
+        monkeypatch.setattr(Core, 'validate_service_template', raise_exception(AriaException))
+        monkeypatch.setattr(service_template_utils, 'get', mock_object)
+        assert_exception_raised(
+            self.invoke('service_templates validate stubpath'),
+            expected_exception=AriaCliError)
