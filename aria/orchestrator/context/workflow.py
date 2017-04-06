@@ -30,7 +30,6 @@ class WorkflowContext(BaseContext):
     """
     def __init__(self,
                  workflow_name,
-                 execution_id,
                  parameters=None,
                  task_max_attempts=1,
                  task_retry_interval=0,
@@ -42,7 +41,6 @@ class WorkflowContext(BaseContext):
         self._task_max_attempts = task_max_attempts
         self._task_retry_interval = task_retry_interval
         self._task_ignore_failure = task_ignore_failure
-        self._execution_id = execution_id
         self._register_logger()
 
     def __repr__(self):
@@ -52,8 +50,8 @@ class WorkflowContext(BaseContext):
                 name=self.__class__.__name__, self=self))
 
     @property
-    def logging_id(self):
-        return '{0}[{1}]'.format(self._workflow_name, self._execution_id)
+    def workflow_name(self):
+        return self._workflow_name
 
     @property
     def execution(self):

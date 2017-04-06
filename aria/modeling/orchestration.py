@@ -393,7 +393,9 @@ class LogBase(ModelMixin):
     level = Column(String)
     msg = Column(String)
     created_at = Column(DateTime, index=True)
-    actor = Column(String)
+
+    # In case of failed execution
+    traceback = Column(Text)
 
     # region foreign keys
 
@@ -408,5 +410,4 @@ class LogBase(ModelMixin):
     # endregion
 
     def __repr__(self):
-        return "<{self.created_at}: [{self.level}] @{self.actor}> {msg}".format(
-            self=self, msg=self.msg[:50])
+        return "{msg}".format(msg=self.msg)

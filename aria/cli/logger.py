@@ -51,6 +51,47 @@ DEFAULT_LOGGER_CONFIG = {
 }
 
 
+class _SugaredModelLogger(object):
+    def __init__(self, base_logger, model_logger_level, model_logger_formats):
+        self._logger = base_logger
+        self._model_logger_level = model_logger_level
+        self._formats = model_logger_formats
+
+    def _set_model_logger_level(self, value):
+        self._model_logger_level = logging.INFO if value == NO_VERBOSE else logging.DEBUG
+
+    def log(self, item):
+        kwargs = dict(item=item)
+
+        formats = self._formats[self._model_logger_level]
+
+        if 'created_at' in formats:
+            kwargs['created_at'] = item.created_at.strftime(formats['created_at'])
+        if 'level' in formats:
+            kwargs['level'] = formats['level'].format(item.level)
+        if 'msg' in formats:
+            kwargs['msg'] = formats['msg'].format(item.msg)
+
+        if 'actor' in formats and item.task:
+            kwargs['actor'] = formats['actor'].format(item.task.actor)
+        if 'execution' in formats:
+            kwargs['execution'] = formats['execution'].format(item.execution)
+
+        # If no format was supplied just print out the original msg.
+        msg = formats.get('main_msg', '{item.msg}').format(**kwargs)
+
+        # Add the exception and the error msg.
+        if item.traceback and self.level > LOW_VERBOSE:
+            msg += os.linesep + '------>'
+            for line in item.traceback.splitlines(True):
+                msg += '\t' + '|' + line
+
+        return getattr(self._logger, item.level.lower())(msg)
+
+    def __getattr__(self, item):
+        return getattr(self._logger, item)
+
+
 class Logging(object):
 
     def __init__(self, config):
@@ -58,7 +99,20 @@ class Logging(object):
         self._verbosity_level = NO_VERBOSE
         self._all_loggers = []
         self._configure_loggers(config)
-        self._lgr = logging.getLogger('aria.cli.main')
+
+        self._lgr = _SugaredModelLogger(
+            base_logger=logging.getLogger('aria.cli.main'),
+            model_logger_level=self._verbosity_level,
+            model_logger_formats={
+                logging.INFO: {
+                    'main_msg': '{item.msg}',
+                },
+                logging.DEBUG: {
+                    'main_msg': '{created_at} | {item.level[0]} | {item.msg}',
+                    'created_at': '%H:%M:%S'
+                }
+            }
+        )
 
     @property
     def logger(self):
@@ -78,6 +132,7 @@ class Logging(object):
     @verbosity_level.setter
     def verbosity_level(self, level):
         self._verbosity_level = level
+        self._lgr._set_model_logger_level(level)
         if self.is_high_verbose_level():
             for logger_name in self._all_loggers:
                 logging.getLogger(logger_name).setLevel(logging.DEBUG)
@@ -111,3 +166,18 @@ class Logging(object):
             self._all_loggers.append(logger_name)
 
         logging.config.dictConfig(logger_dict)
+
+
+class LogConsumer(object):
+
+    def __init__(self, model_storage, execution_id):
+        self._last_visited_id = 0
+        self._model_storage = model_storage
+        self._execution_id = execution_id
+
+    def __iter__(self):
+
+        for log in self._model_storage.log.iter(filters=dict(
+                execution_fk=self._execution_id, id=dict(gt=self._last_visited_id))):
+            self._last_visited_id = log.id
+            yield log

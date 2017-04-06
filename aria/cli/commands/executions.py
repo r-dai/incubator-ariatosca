@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from aria.cli.logger import LogConsumer
 from .. import utils
 from ..table import print_data
 from ..cli import aria
@@ -139,12 +139,18 @@ def start(workflow_name,
 
     logger.info('Starting {0}execution. Press Ctrl+C cancel'.format('dry ' if dry else ''))
     execution_thread.start()
+
+    log_consumer = LogConsumer(model_storage, workflow_runner.execution_id)
     try:
         while execution_thread.is_alive():
-            # using join without a timeout blocks and ignores KeyboardInterrupt
-            execution_thread.join(1)
+            for log in log_consumer:
+                logger.log(log)
+
     except KeyboardInterrupt:
         _cancel_execution(workflow_runner, execution_thread, logger)
+
+    for log in log_consumer:
+        logger.log(log)
 
     # raise any errors from the execution thread (note these are not workflow execution errors)
     execution_thread.raise_error_if_exists()
