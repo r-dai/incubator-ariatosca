@@ -221,6 +221,11 @@ def create_plugin_specification(name='test_plugin', version='0.1'):
     )
 
 
+def create_input(name, value):
+    p = models.Parameter()
+    return p.wrap(name, value)
+
+
 def _dictify(item):
     return dict(((item.name, item),))
 

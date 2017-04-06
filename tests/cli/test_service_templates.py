@@ -44,6 +44,16 @@ class MockServiceTemplateStorage(object):
             st.services = [service]
         return st
 
+    @staticmethod
+    def get_by_name(name):
+        st = models.create_service_template('test_st')
+        if name == 'with_inputs':
+            input = models.create_input(name='input1', value='value1')
+            st.inputs = {'input1': input}
+        if name == 'without_inputs':
+            st.inputs = {}
+        return st
+
 
 class TestServiceTemplatesShow(TestCliBase):
 
@@ -175,3 +185,16 @@ class TestServiceTemplatesDelete(TestCliBase):
             self.invoke('service_templates delete test_st'),
             expected_exception=AriaCliError,
             expected_msg='')
+
+
+class TestServiceTemplatesInputs(TestCliBase):
+
+    def test_inputs_existing_inputs(self, monkeypatch):
+        monkeypatch.setattr(Environment, 'model_storage', MockStorage())
+        self.invoke('service_templates inputs with_inputs')
+        assert 'input1' in self.logger_output_string and 'value1' in self.logger_output_string
+
+    def test_inputs_no_inputs(self, monkeypatch):
+        monkeypatch.setattr(Environment, 'model_storage', MockStorage())
+        self.invoke('service_templates inputs without_inputs')
+        assert 'No inputs' in self.logger_output_string
