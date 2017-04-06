@@ -158,4 +158,4 @@ def handle_storage_exception(e, model_class, name):
               'There already a exists a {model_class} with the same name' \
               .format(model_class=model_class, name=name)
         raise AriaCliError(msg)
-    raise
+    raise AriaCliError()

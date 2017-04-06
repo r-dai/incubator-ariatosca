@@ -127,7 +127,7 @@ class TestServiceTemplatesStore(TestCliBase):
         self.invoke('service_templates store stubpath test_st')
         assert 'Service template test_st stored' in self.logger_output_string
 
-    def test_store_raises_exception(self, monkeypatch, mock_object):
+    def test_store_raises_exception_resulting_from_name_uniqueness(self, monkeypatch, mock_object):
 
         monkeypatch.setattr(service_template_utils, 'get', mock_object)
         monkeypatch.setattr(Core,
@@ -141,6 +141,18 @@ class TestServiceTemplatesStore(TestCliBase):
             expected_exception=AriaCliError,
             expected_msg='Could not store service template `test_st`\n'
                          'There already a exists a service template with the same name')
+
+    def test_store_raises_exception(self, monkeypatch, mock_object):
+
+        monkeypatch.setattr(service_template_utils, 'get', mock_object)
+        monkeypatch.setattr(Core,
+                            'create_service_template',
+                            raise_exception(storage_exceptions.NotFoundError))
+
+        outcome = self.invoke('service_templates store stubpath test_st')
+        assert_exception_raised(
+            outcome,
+            expected_exception=AriaCliError)
 
 
 class TestServiceTemplatesDelete(TestCliBase):

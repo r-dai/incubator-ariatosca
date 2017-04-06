@@ -18,7 +18,7 @@ class TestCliBase(object):
         return self._logger_output.getvalue()
 
 
-def assert_exception_raised(outcome, expected_exception, expected_msg):
+def assert_exception_raised(outcome, expected_exception, expected_msg=''):
     assert isinstance(outcome.exception, expected_exception)
     assert expected_msg == str(outcome.exception)
 
