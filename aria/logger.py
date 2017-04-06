@@ -21,6 +21,9 @@ import logging
 from logging import handlers as logging_handlers
 from datetime import datetime
 
+TASK_LOGGER_NAME = 'aria.executions.task'
+
+
 _base_logger = logging.getLogger('aria')
 
 
