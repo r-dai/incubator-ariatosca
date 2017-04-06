@@ -41,8 +41,8 @@ def show(workflow_name, service_name, model_storage, logger):
     """
     logger.info('Retrieving workflow {0} for service {1}'.format(
         workflow_name, service_name))
-    service = model_storage.service.get(service_name)
-    workflow = next((wf for wf in service.workflows if
+    service = model_storage.service.get_by_name(service_name)
+    workflow = next((wf for wf in service.workflows.values() if
                      wf.name == workflow_name), None)
     if not workflow:
         raise AriaCliError(
@@ -52,33 +52,32 @@ def show(workflow_name, service_name, model_storage, logger):
         'service_template_name': service.service_template_name,
         'service_name': service.name
     }
-    print_data(WORKFLOW_COLUMNS, workflow, 'Workflows:', defaults=defaults)
+    print_data(WORKFLOW_COLUMNS, workflow.to_dict(), 'Workflows:', defaults=defaults)
 
-    # print workflow parameters
-    mandatory_params = dict()
-    optional_params = dict()
-    for param_name, param in workflow.parameters.iteritems():
-        params_group = optional_params if 'default' in param else \
-            mandatory_params
-        params_group[param_name] = param
+    # print workflow inputs
+    required_inputs = dict()
+    optional_inputs = dict()
+    for input_name, input in workflow.inputs.iteritems():
+        inputs_group = optional_inputs if input.value is not None else required_inputs
+        inputs_group[input_name] = input
 
-    logger.info('Workflow Parameters:')
-    logger.info('\tMandatory Parameters:')
-    for param_name, param in mandatory_params.iteritems():
-        if 'description' in param:
-            logger.info('\t\t{0}\t({1})'.format(param_name,
-                                                param['description']))
+    logger.info('Workflow Inputs:')
+    logger.info('\tMandatory Inputs:')
+    for input_name, input in required_inputs.iteritems():
+        if input.description is not None:
+            logger.info('\t\t{0}\t({1})'.format(input_name,
+                                                input.description))
         else:
-            logger.info('\t\t{0}'.format(param_name))
+            logger.info('\t\t{0}'.format(input_name))
 
-    logger.info('\tOptional Parameters:')
-    for param_name, param in optional_params.iteritems():
-        if 'description' in param:
+    logger.info('\tOptional Inputs:')
+    for input_name, input in optional_inputs.iteritems():
+        if input.description is not None:
             logger.info('\t\t{0}: \t{1}\t({2})'.format(
-                param_name, param['default'], param['description']))
+                input_name, input.value, input.description))
         else:
-            logger.info('\t\t{0}: \t{1}'.format(param_name,
-                                                param['default']))
+            logger.info('\t\t{0}: \t{1}'.format(input_name,
+                                                input.value))
     logger.info('')
 
 
