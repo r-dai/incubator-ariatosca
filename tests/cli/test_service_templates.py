@@ -94,9 +94,8 @@ class TestServiceTemplatesShow(TestCliBase):
 
         # TODO consider removing as it does not seem to test the cli but rather the message received
         # from the storage
-        outcome = self.invoke('service_templates show 5')
         assert_exception_raised(
-            outcome,
+            self.invoke('service_templates show 5'),
             expected_exception=storage_exceptions.NotFoundError,
             expected_msg='Requested `ServiceTemplate` with ID `5` was not found')
 
@@ -146,9 +145,8 @@ class TestServiceTemplatesStore(TestCliBase):
                             raise_exception(storage_exceptions.NotFoundError,
                                             msg='UNIQUE constraint failed'))
 
-        outcome = self.invoke('service_templates store stubpath test_st')
         assert_exception_raised(
-            outcome,
+            self.invoke('service_templates store stubpath test_st'),
             expected_exception=AriaCliError,
             expected_msg='Could not store service template `test_st`\n'
                          'There already a exists a service template with the same name')
@@ -160,9 +158,8 @@ class TestServiceTemplatesStore(TestCliBase):
                             'create_service_template',
                             raise_exception(storage_exceptions.NotFoundError))
 
-        outcome = self.invoke('service_templates store stubpath test_st')
         assert_exception_raised(
-            outcome,
+            self.invoke('service_templates store stubpath test_st'),
             expected_exception=AriaCliError)
 
 
