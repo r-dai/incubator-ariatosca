@@ -13,22 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO handle
-if __name__ == '__main__' and __package__ is None:
-    import aria.cli
-    __package__ = 'aria.cli'
-
-# from . import env
-from .cli import aria
-from .commands import service_templates
-from .commands import node_templates
-from .commands import services
-from .commands import nodes
-from .commands import workflows
-from .commands import executions
-from .commands import plugins
-from .commands import logs
-from .. import install_aria_extensions
+from aria import install_aria_extensions
+from aria.cli import commands
+from aria.cli.cli import aria
 
 
 @aria.group(name='aria')
@@ -50,14 +37,14 @@ def _register_commands():
     Register the CLI's commands.
     """
 
-    _aria.add_command(service_templates.service_templates)
-    _aria.add_command(node_templates.node_templates)
-    _aria.add_command(services.services)
-    _aria.add_command(nodes.nodes)
-    _aria.add_command(workflows.workflows)
-    _aria.add_command(executions.executions)
-    _aria.add_command(plugins.plugins)
-    _aria.add_command(logs.logs)
+    _aria.add_command(commands.service_templates.service_templates)
+    _aria.add_command(commands.node_templates.node_templates)
+    _aria.add_command(commands.services.services)
+    _aria.add_command(commands.nodes.nodes)
+    _aria.add_command(commands.workflows.workflows)
+    _aria.add_command(commands.executions.executions)
+    _aria.add_command(commands.plugins.plugins)
+    _aria.add_command(commands.logs.logs)
 
 
 _register_commands()
