@@ -18,6 +18,7 @@ import logging
 import pytest
 
 import aria
+from aria.orchestrator.context import common
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -37,11 +38,5 @@ def logging_handler_cleanup(request):
     :return:
     """
     def clear_logging_handlers():
-        logged_ctx_names = [
-            aria.orchestrator.context.workflow.WorkflowContext.__name__,
-            aria.orchestrator.context.operation.NodeOperationContext.__name__,
-            aria.orchestrator.context.operation.RelationshipOperationContext.__name__
-        ]
-        for logger_name in logged_ctx_names:
-            logging.getLogger(logger_name).handlers = []
+        logging.getLogger(common.TASK_LOGGER_NAME).handlers = []
     request.addfinalizer(clear_logging_handlers)

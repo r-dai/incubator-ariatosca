@@ -32,6 +32,9 @@ from aria.storage import exceptions
 from ...utils.uuid import generate_uuid
 
 
+TASK_LOGGER_NAME = 'aria.executions.task'
+
+
 class BaseContext(object):
     """
     Base context object for workflow and operation
@@ -69,7 +72,7 @@ class BaseContext(object):
 
     def _register_logger(self, level=None, task_id=None):
         self.logger = self.PrefixedLogger(
-            logging.getLogger('aria.executions.task'), self.logging_id, task_id=task_id)
+            logging.getLogger(TASK_LOGGER_NAME), self.logging_id, task_id=task_id)
         self.logger.setLevel(level or logging.DEBUG)
         if not self.logger.handlers:
             self.logger.addHandler(aria_logger.create_console_log_handler())
