@@ -78,12 +78,13 @@ def _merge_and_validate_inputs(inputs, template_inputs):
         else:
             # Validate input type
             try:
-                # TODO: improve type validation; Needs to consider custom data_types as well
-                if input_template.type_name in ('list', 'dict', 'tuple', 'string', 'integer',
-                                                'boolean', 'float'):
-                    validate_value_type(inputs[input_name], input_template.type_name)
+                validate_value_type(inputs[input_name], input_template.type_name)
             except ValueError:
                 wrong_type_inputs[input_name] = input_template.type_name
+            except RuntimeError:
+                # TODO: This error shouldn't be raised (or caught), but right now we lack support
+                # for custom data_types, which will raise this error. Skipping their validation.
+                pass
 
     if missing_inputs:
         raise exceptions.MissingRequiredInputsException(

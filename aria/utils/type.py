@@ -15,9 +15,13 @@
 
 
 def validate_value_type(value, type_name):
-    """Supports both python and yaml type names"""
-    #TODO add timestamp type?
+    """
+    Validate a value is of a specific type.
+    A ValueError will be raised on type mismatch.
+    Supports both python and yaml type names.
+    """
 
+    #TODO add timestamp type?
     name_to_type = {
         'list': list,
         'dict': dict,
@@ -34,11 +38,9 @@ def validate_value_type(value, type_name):
 
     type = name_to_type.get(type_name.lower())
     if type is None:
-        raise ValueError('No supported type_name was provided')
-    try:
-        type(value)
-    except ValueError:
-        raise
+        raise RuntimeError('No supported type_name was provided')
+    # validating value type - ValueError will be raised on type mismatch
+    type(value)
 
 
 def convert_value_to_type(str_value, type_name):
