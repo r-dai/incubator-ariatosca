@@ -95,7 +95,7 @@ def install(ctx, plugin_path, plugin_manager, logger):
 
     `PLUGIN_PATH` is the path to wagon archive to install.
     """
-    # ctx.invoke(validate, plugin_path=plugin_path)
+    ctx.invoke(validate, plugin_path=plugin_path)
     logger.info('Installing plugin {0}...'.format(plugin_path))
     plugin = plugin_manager.install(plugin_path)
     logger.info("Plugin installed. The plugin's id is {0}".format(plugin.id))
@@ -128,6 +128,6 @@ def list(sort_by, descending, model_storage, logger):
     """List all plugins on the manager
     """
     logger.info('Listing all plugins...')
-    plugins = [p.to_dict() for p in model_storage.plugin.list(
+    plugins_list = [p.to_dict() for p in model_storage.plugin.list(
         sort=storage_sort_param(sort_by, descending))]
-    print_data(PLUGIN_COLUMNS, plugins, 'Plugins:')
+    print_data(PLUGIN_COLUMNS, plugins_list, 'Plugins:')

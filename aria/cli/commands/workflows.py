@@ -93,10 +93,11 @@ def list(service_name, model_storage, logger):
     """
     logger.info('Listing workflows for service {0}...'.format(service_name))
     service = model_storage.service.get_by_name(service_name)
-    workflows = [wf.to_dict() for wf in sorted(service.workflows.values(), key=lambda w: w.name)]
+    workflows_list = [wf.to_dict() for wf in
+                      sorted(service.workflows.values(), key=lambda w: w.name)]
 
     defaults = {
         'service_template_name': service.service_template_name,
         'service_name': service.name
     }
-    print_data(WORKFLOW_COLUMNS, workflows, 'Workflows:', defaults=defaults)
+    print_data(WORKFLOW_COLUMNS, workflows_list, 'Workflows:', defaults=defaults)

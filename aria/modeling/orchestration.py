@@ -39,7 +39,6 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
 
 from ..orchestrator.exceptions import (TaskAbortException, TaskRetryException)
-from .types import Dict
 from .mixins import ModelMixin
 from . import (
     relationship,

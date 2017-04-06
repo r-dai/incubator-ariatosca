@@ -76,11 +76,11 @@ def download_file(url, destination=None):
     :rtype: str
 
     """
-    CHUNK_SIZE = 1024
+    chunk_size = 1024
 
     if not destination:
-        fd, destination = tempfile.mkstemp()
-        os.close(fd)
+        file_descriptor, destination = tempfile.mkstemp()
+        os.close(file_descriptor)
     logger.info('Downloading {0} to {1}...'.format(url, destination))
 
     try:
@@ -95,7 +95,7 @@ def download_file(url, destination=None):
 
     try:
         with open(destination, 'wb') as destination_file:
-            for chunk in response.iter_content(CHUNK_SIZE):
+            for chunk in response.iter_content(chunk_size):
                 destination_file.write(chunk)
     except IOError as ex:
         raise AriaCliError(
@@ -140,7 +140,7 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
                                                   float(total_bytes))))
         percents = min(100.00, round(
             100.00 * (read_bytes / float(total_bytes)), 2))
-        bar = '#' * filled_length + '-' * (bar_length - filled_length)
+        bar = '#' * filled_length + '-' * (bar_length - filled_length)  # pylint: disable=blacklisted-name
 
         # The \r caret makes sure the cursor moves back to the beginning of
         # the line

@@ -28,23 +28,20 @@ def logs():
 @logs.command(name='list',
               short_help='List execution logs')
 @aria.argument('execution-id')
-@aria.options.json_output
 @aria.options.verbose()
 @aria.pass_model_storage
 @aria.pass_logger
 def list(execution_id,
-         json_output,
          model_storage,
          logger):
     """Display logs for an execution
     """
     logger.info('Listing logs for execution id {0}'.format(execution_id))
-    # events_logger = get_events_logger(json_output)
-    logs = model_storage.log.list(filters=dict(execution_fk=execution_id),
-                                  sort=utils.storage_sort_param('created_at', False))
+    logs_list = model_storage.log.list(filters=dict(execution_fk=execution_id),
+                                       sort=utils.storage_sort_param('created_at', False))
     # TODO: print logs nicely
-    if logs:
-        for log in logs:
+    if logs_list:
+        for log in logs_list:
             print log
     else:
         logger.info('\tNo logs')
@@ -62,7 +59,7 @@ def delete(execution_id, model_storage, logger):
     `EXECUTION_ID` is the execution logs to delete.
     """
     logger.info('Deleting logs for execution id {0}'.format(execution_id))
-    logs = model_storage.log.list(filters=dict(execution_fk=execution_id))
-    for log in logs:
+    logs_list = model_storage.log.list(filters=dict(execution_fk=execution_id))
+    for log in logs_list:
         model_storage.log.delete(log)
     logger.info('Deleted logs for execution id {0}'.format(execution_id))

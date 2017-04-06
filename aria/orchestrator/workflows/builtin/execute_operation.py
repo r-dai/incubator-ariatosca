@@ -18,7 +18,6 @@ Builtin execute_operation workflow
 """
 
 from . import utils
-from ..api.task import OperationTask
 from ... import workflow
 
 

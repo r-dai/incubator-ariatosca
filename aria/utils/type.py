@@ -38,7 +38,7 @@ def validate_value_type(value, type_name):
     try:
         type(value)
     except ValueError:
-        raise False
+        raise
 
 
 def convert_value_to_type(str_value, type_name):

@@ -32,15 +32,15 @@ def extract_archive(source):
 
 
 def tar(source, destination):
-    with closing(tarfile.open(destination, 'w:gz')) as tar:
-        tar.add(source, arcname=os.path.basename(source))
+    with closing(tarfile.open(destination, 'w:gz')) as tar_archive:
+        tar_archive.add(source, arcname=os.path.basename(source))
 
 
 def untar(archive, destination=None):
     if not destination:
         destination = tempfile.mkdtemp()
-    with closing(tarfile.open(name=archive)) as tar:
-        tar.extractall(path=destination, members=tar.getmembers())
+    with closing(tarfile.open(name=archive)) as tar_archive:
+        tar_archive.extractall(path=destination, members=tar_archive.getmembers())
     return destination
 
 

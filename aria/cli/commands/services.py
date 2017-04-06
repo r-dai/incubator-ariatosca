@@ -64,10 +64,10 @@ def list(service_template_name,
         logger.info('Listing all service...')
         filters = {}
 
-    services = [d.to_dict() for d in model_storage.service.list(
+    services_list = [d.to_dict() for d in model_storage.service.list(
         sort=storage_sort_param(sort_by=sort_by, descending=descending),
         filters=filters)]
-    print_data(SERVICE_COLUMNS, services, 'Services:')
+    print_data(SERVICE_COLUMNS, services_list, 'Services:')
 
 
 @services.command(name='create',
@@ -82,7 +82,7 @@ def list(service_template_name,
 @aria.pass_logger
 def create(service_template_name,
            service_name,
-           inputs,
+           inputs,  # pylint: disable=redefined-outer-name
            model_storage,
            resource_storage,
            plugin_manager,
@@ -103,7 +103,8 @@ def create(service_template_name,
         handle_storage_exception(e, 'service', service_name)
     except AriaException as e:
         logger.info(str(e))
-        service_templates.print_service_template_inputs(model_storage, service_template_name)
+        service_templates.print_service_template_inputs(model_storage, service_template_name,
+                                                        logger)
         raise AriaCliError(str(e))
     logger.info("Service created. The service's name is {0}".format(service.name))
 

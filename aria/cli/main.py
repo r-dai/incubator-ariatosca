@@ -13,13 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#TODO handle
+# TODO handle
 if __name__ == '__main__' and __package__ is None:
     import aria.cli
     __package__ = 'aria.cli'
 
 # from . import env
-from . import logger
 from .cli import aria
 from .commands import service_templates
 from .commands import node_templates

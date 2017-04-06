@@ -137,4 +137,4 @@ def _is_empty_task(actor, interface_name, operation_name):
 
     raise exceptions.OperationNotFoundException(
         'Could not find operation "{0}" on interface "{1}" for {2} "{3}"'
-            .format(operation_name, interface_name, type(actor).__name__.lower(), actor.name))
+        .format(operation_name, interface_name, type(actor).__name__.lower(), actor.name))

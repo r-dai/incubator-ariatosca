@@ -84,7 +84,7 @@ def full_type_name(value):
 
 
 def decode_list(data):
-    rv = []
+    decoded_list = []
     for item in data:
         if isinstance(item, unicode):
             item = item.encode('utf-8')
@@ -92,12 +92,12 @@ def decode_list(data):
             item = decode_list(item)
         elif isinstance(item, dict):
             item = decode_dict(item)
-        rv.append(item)
-    return rv
+        decoded_list.append(item)
+    return decoded_list
 
 
 def decode_dict(data):
-    rv = {}
+    decoded_dict = {}
     for key, value in data.iteritems():
         if isinstance(key, unicode):
             key = key.encode('utf-8')
@@ -107,8 +107,8 @@ def decode_dict(data):
             value = decode_list(value)
         elif isinstance(value, dict):
             value = decode_dict(value)
-        rv[key] = value
-    return rv
+        decoded_dict[key] = value
+    return decoded_dict
 
 
 def try_convert_from_str(string, target_type):

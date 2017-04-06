@@ -16,9 +16,9 @@
 import os
 from datetime import datetime
 
-from .env import logger
-
 from prettytable import PrettyTable
+
+from .env import logger
 
 
 def generate(cols, data, defaults=None):
@@ -63,19 +63,19 @@ def generate(cols, data, defaults=None):
         else:
             return defaults[column]
 
-    pt = PrettyTable([col for col in cols])
+    pretty_table = PrettyTable([col for col in cols])
 
-    for d in data:
+    for datum in data:
         values_row = []
-        for c in cols:
-            values_row.append(get_values_per_column(c, d))
-        pt.add_row(values_row)
+        for col in cols:
+            values_row.append(get_values_per_column(col, datum))
+        pretty_table.add_row(values_row)
 
-    return pt
+    return pretty_table
 
 
-def log(title, tb):
-    logger.info('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
+def log(title, table):
+    logger.info('{0}{1}{0}{2}{0}'.format(os.linesep, title, table))
 
 
 def print_data(columns, items, header_text, max_width=None, defaults=None):
@@ -84,7 +84,7 @@ def print_data(columns, items, header_text, max_width=None, defaults=None):
     elif not isinstance(items, list):
         items = [items]
 
-    pt = generate(columns, data=items, defaults=defaults)
+    pretty_table = generate(columns, data=items, defaults=defaults)
     if max_width:
-        pt.max_width = max_width
-    log(header_text, pt)
+        pretty_table.max_width = max_width
+    log(header_text, pretty_table)

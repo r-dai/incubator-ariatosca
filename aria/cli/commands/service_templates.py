@@ -89,9 +89,10 @@ def list(sort_by, descending, model_storage, logger):
         return service_template
 
     logger.info('Listing all service templates...')
-    service_templates = [trim_description(b.to_dict()) for b in model_storage.service_template.list(
-        sort=utils.storage_sort_param(sort_by, descending))]
-    print_data(SERVICE_TEMPLATE_COLUMNS, service_templates, 'Service templates:')
+    service_templates_list = [trim_description(b.to_dict()) for b in
+                              model_storage.service_template.list(
+                                  sort=utils.storage_sort_param(sort_by, descending))]
+    print_data(SERVICE_TEMPLATE_COLUMNS, service_templates_list, 'Service templates:')
 
 
 @service_templates.command(name='store',
@@ -158,7 +159,7 @@ def inputs(service_template_name, model_storage, logger):
     `SERVICE_TEMPLATE_NAME` is the name of the service template to show inputs for.
     """
     logger.info('Showing inputs for service template {0}...'.format(service_template_name))
-    print_service_template_inputs(model_storage, service_template_name)
+    print_service_template_inputs(model_storage, service_template_name, logger)
 
 
 @service_templates.command(name='validate',
@@ -205,7 +206,6 @@ def create_archive(service_template_path, destination, logger):
     logger.info('Csar archive created at {0}'.format(destination))
 
 
-@aria.pass_logger
 def print_service_template_inputs(model_storage, service_template_name, logger):
     service_template = model_storage.service_template.get_by_name(service_template_name)
 

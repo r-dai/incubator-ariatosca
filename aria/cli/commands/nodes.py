@@ -81,8 +81,8 @@ def list(service_name,
         logger.info('Listing all nodes...')
         filters = {}
 
-    nodes = [node.to_dict() for node in model_storage.node.list(
+    nodes_list = [node.to_dict() for node in model_storage.node.list(
         filters=filters,
         sort=utils.storage_sort_param(sort_by, descending))]
 
-    print_data(NODE_COLUMNS, nodes, 'Nodes:')
+    print_data(NODE_COLUMNS, nodes_list, 'Nodes:')

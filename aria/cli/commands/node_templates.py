@@ -89,8 +89,8 @@ def list(service_template_name, sort_by, descending, model_storage, logger):
         logger.info('Listing all node templates...')
         filters = {}
 
-    node_templates = [nt.to_dict() for nt in model_storage.node_template.list(
+    node_templates_list = [nt.to_dict() for nt in model_storage.node_template.list(
         filters=filters,
         sort=utils.storage_sort_param(sort_by, descending))]
 
-    print_data(NODE_TEMPLATE_COLUMNS, node_templates, 'Node templates:')
+    print_data(NODE_TEMPLATE_COLUMNS, node_templates_list, 'Node templates:')

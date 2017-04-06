@@ -279,7 +279,7 @@ class ServiceTemplateBase(TemplateModelMixin):
             ('interface_types', formatting.as_raw(self.interface_types)),
             ('artifact_types', formatting.as_raw(self.artifact_types))))
 
-    def instantiate(self, container, inputs=None):
+    def instantiate(self, container, inputs=None):  # pylint: disable=arguments-differ
         from . import models
         context = ConsumptionContext.get_thread_local()
         now = datetime.now()

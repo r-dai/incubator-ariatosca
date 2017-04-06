@@ -16,6 +16,10 @@
 # pylint: disable=abstract-method
 
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import (
+    Column,
+    Text
+)
 
 from . import (
     service_template,
@@ -24,11 +28,6 @@ from . import (
     service_common,
     orchestration,
     mixins,
-)
-
-from sqlalchemy import (
-    Column,
-    Text
 )
 
 aria_declarative_base = declarative_base(cls=mixins.ModelIDMixin)

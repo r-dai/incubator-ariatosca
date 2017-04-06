@@ -16,7 +16,6 @@
 """
 Provides the tasks to be entered into the task graph
 """
-import copy
 
 from ....modeling import models
 from ....modeling import utils as modeling_utils

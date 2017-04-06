@@ -277,5 +277,5 @@ class ExceptionThread(Thread):
 
     def raise_error_if_exists(self):
         if self.is_error():
-            t, v, tb = self.exception
-            raise t, v, tb
+            type_, value, tb = self.exception
+            raise type_, value, tb

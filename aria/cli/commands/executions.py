@@ -90,11 +90,11 @@ def list(service_name,
         logger.info('Listing all executions...')
         filters = {}
 
-    executions = [e.to_dict() for e in model_storage.execution.list(
+    executions_list = [e.to_dict() for e in model_storage.execution.list(
         filters=filters,
         sort=utils.storage_sort_param(sort_by, descending))]
 
-    print_data(EXECUTION_COLUMNS, executions, 'Executions:')
+    print_data(EXECUTION_COLUMNS, executions_list, 'Executions:')
 
 
 @executions.command(name='start',

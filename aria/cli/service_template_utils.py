@@ -122,7 +122,7 @@ def generate_id(service_template_path, service_template_filename=SAMPLE_SERVICE_
     """
     service_template_id = os.path.split(os.path.dirname(os.path.abspath(
         service_template_path)))[-1]
-    if not service_template_filename == SAMPLE_SERVICE_TEMPLATE_FILENAME:
+    if service_template_filename != SAMPLE_SERVICE_TEMPLATE_FILENAME:
         filename, _ = os.path.splitext(os.path.basename(service_template_filename))
         service_template_id = (service_template_id + '.' + filename)
     return service_template_id.replace('_', '-')

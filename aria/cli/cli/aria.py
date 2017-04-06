@@ -129,17 +129,17 @@ def set_cli_except_hook():
         for solution in possible_solutions:
             logger.info('  - {0}'.format(solution))
 
-    def new_excepthook(tpe, value, tb):
+    def new_excepthook(tpe, value, trace):
         if env.logging.is_high_verbose_level():
             # log error including traceback
-            logger.error(get_exception_as_string(tpe, value, tb))
+            logger.error(get_exception_as_string(tpe, value, trace))
         else:
             # write the full error to the log file
             with open(env.logging.log_file, 'a') as log_file:
                 traceback.print_exception(
                     etype=tpe,
                     value=value,
-                    tb=tb,
+                    tb=trace,
                     file=log_file)
             # print only the error message
             print value
@@ -211,9 +211,9 @@ class AliasedGroup(click.Group):
         super(AliasedGroup, self).__init__(*args, **kwargs)
 
     def get_command(self, ctx, cmd_name):
-        rv = click.Group.get_command(self, ctx, cmd_name)
-        if rv is not None:
-            return rv
+        cmd = click.Group.get_command(self, ctx, cmd_name)
+        if cmd is not None:
+            return cmd
         matches = \
             [x for x in self.list_commands(ctx) if x.startswith(cmd_name)]
         if not matches:
