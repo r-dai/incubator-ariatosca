@@ -180,7 +180,7 @@ class TestServiceTemplate(object):
     @pytest.mark.parametrize(
         'is_valid, description, created_at, updated_at, main_file_name',
         [
-            (False, {}, now, now, '/path'),
+            (False, [], now, now, '/path'),
             (False, 'description', 'error', now, '/path'),
             (False, 'description', now, 'error', '/path'),
             (False, 'description', now, now, {}),
