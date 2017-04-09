@@ -26,8 +26,8 @@ from .context.workflow import WorkflowContext
 from .workflows.builtin import BUILTIN_WORKFLOWS, BUILTIN_WORKFLOWS_PATH_PREFIX
 from .workflows.core.engine import Engine
 from .workflows.executor.process import ProcessExecutor
-from ..modeling import utils as modeling_utils
 from ..modeling import models
+from ..modeling import utils as modeling_utils
 from ..utils.imports import import_fullname
 
 
@@ -100,8 +100,6 @@ class WorkflowRunner(object):
         return self._model_storage.service.get(self._service_id)
 
     def execute(self):
-        #TODO uncomment, commented for testing purposes
-        # self._validate_no_active_executions()
         self._engine.execute()
 
     def cancel(self):
@@ -114,15 +112,16 @@ class WorkflowRunner(object):
             workflow_name=self._workflow_name,
             inputs={})
 
-        # built-in workflows don't have any inputs, and are also
-        # not a part of the service's workflows field
-        if self._workflow_name not in BUILTIN_WORKFLOWS:
-            workflow_inputs = {k: v for k, v in
-                               self.service.workflows[self._workflow_name].inputs
-                               if k not in WORKFLOW_POLICY_INTERNAL_PROPERTIES}
+        if self._workflow_name in BUILTIN_WORKFLOWS:
+            workflow_inputs = dict()  # built-in workflows don't have any inputs
+        else:
+            workflow_inputs = dict((k, v) for k, v in
+                                   self.service.workflows[self._workflow_name].inputs.iteritems()
+                                   if k not in WORKFLOW_POLICY_INTERNAL_PROPERTIES)
 
-            execution.inputs = modeling_utils.create_inputs(inputs, workflow_inputs)
-
+        execution.inputs = modeling_utils.create_inputs(inputs, workflow_inputs)
+        # TODO: these two following calls should execute atomically
+        self._validate_no_active_executions(execution)
         self._model_storage.execution.put(execution)
         return execution
 
@@ -133,11 +132,12 @@ class WorkflowRunner(object):
                 'No workflow policy {0} declared in service {1}'
                 .format(self._workflow_name, self.service.name))
 
-    def _validate_no_active_executions(self):
-        active_executions = [e for e in self.service.executions if e.is_active()]
+    def _validate_no_active_executions(self, execution):
+        active_executions = [e for e in self.service.executions
+                             if e.id != execution.id and e.is_active()]
         if active_executions:
             raise exceptions.ActiveExecutionsError(
-                "Can't start execution; Service {0} has a running execution with id {1}"
+                "Can't start execution; Service {0} has an active execution with id {1}"
                 .format(self.service.name, active_executions[0].id))
 
     def _get_workflow_fn(self):

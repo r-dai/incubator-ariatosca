@@ -96,7 +96,7 @@ def _merge_and_validate_inputs(inputs, template_inputs):
         for param_name, param_type in wrong_type_inputs.iteritems():
             error_message.write('Input "{0}" must be of type {1}\n'.
                                 format(param_name, param_type))
-        raise exceptions.InputOfWrongTypeException(error_message.getvalue())
+        raise exceptions.InputsOfWrongTypeException(error_message.getvalue())
 
     undeclared_inputs = [input_name for input_name in inputs.keys()
                          if input_name not in template_inputs]

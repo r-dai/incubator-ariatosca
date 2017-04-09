@@ -36,11 +36,12 @@ def validate_value_type(value, type_name):
         'float': float
     }
 
-    type = name_to_type.get(type_name.lower())
-    if type is None:
+    type_ = name_to_type.get(type_name.lower())
+    if type_ is None:
         raise RuntimeError('No supported type_name was provided')
-    # validating value type - ValueError will be raised on type mismatch
-    type(value)
+
+    if type(value) != type_:
+        raise ValueError('Value {0} is not of type {1}'.format(value, type_name))
 
 
 def convert_value_to_type(str_value, type_name):

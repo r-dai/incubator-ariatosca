@@ -40,7 +40,7 @@ class MissingRequiredInputsException(ModelingException):
     """
 
 
-class InputOfWrongTypeException(ModelingException):
+class InputsOfWrongTypeException(ModelingException):
     """
     ARIA modeling exception: Inputs of the wrong types have been provided
     """
