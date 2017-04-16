@@ -130,7 +130,9 @@ def _patch_ctx(ctx):
 
 def _hide_output(ctx, groups):
     """ Hides Fabric's output for every 'entity' in `groups` """
-    groups = set(groups or [])
+    # TODO: restore.
+    # groups = set(groups or groups)
+    groups = set(['everything'])
     if not groups.issubset(constants.VALID_FABRIC_GROUPS):
         ctx.task.abort('`hide_output` must be a subset of {0} (Provided: {1})'
                        .format(', '.join(constants.VALID_FABRIC_GROUPS), ', '.join(groups)))
@@ -144,6 +146,10 @@ def _fabric_env(ctx, fabric_env, warn_only):
     env.update(fabric_env or {})
     env.setdefault('warn_only', warn_only)
     # validations
+
+    # TODO: this a silly fix, we need intrinsic functions for this to work properly
+    env['host_string'] = ctx.model.node_template.get_by_name('virtual_ip').nodes[0].runtime_properties['floating_ip_address']
+
     if (not env.get('host_string')) and (ctx.task) and (ctx.task.actor) and (ctx.task.actor.host):
         env['host_string'] = ctx.task.actor.host.host_address
     if not env.get('host_string'):

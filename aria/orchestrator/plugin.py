@@ -43,6 +43,7 @@ class PluginManager(object):
         os_props = metadata['build_server_os_properties']
 
         plugin = cls(
+            name=metadata['package_name'],
             archive_name=metadata['archive_name'],
             supported_platform=metadata['supported_platform'],
             supported_py_versions=metadata['supported_python_versions'],

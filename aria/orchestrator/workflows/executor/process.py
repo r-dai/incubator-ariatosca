@@ -383,14 +383,12 @@ def _main():
 
     implementation = arguments['implementation']
     operation_inputs = arguments['operation_inputs']
-    import pydevd; pydevd.settrace('localhost', suspend=False)
-    operation_inputs = dict((k, v.value) for k, v in operation_inputs.items())
     context_dict = arguments['context']
 
     # This is required for the instrumentation work properly.
     # See docstring of `remove_mutable_association_listener` for further details
     modeling_types.remove_mutable_association_listener()
-    import pydevd; pydevd.settrace('localhost', suspend=False)
+
     with instrumentation.track_changes() as instrument:
         try:
             ctx = context_dict['context_cls'].deserialize_from_dict(**context_dict['context'])

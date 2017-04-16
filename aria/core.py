@@ -75,14 +75,20 @@ class Core(object):
             service = service_template.instantiate(None, self.model_storage, inputs=inputs)
 
         self.model_storage._all_api_kwargs['session'].flush()
-        consumption.ConsumerChain(
-            context,
-            (
-                consumption.FindHosts,
-                consumption.ConfigureOperations
-            )).consume()
-        if context.validation.dump_issues():
-            raise exceptions.InstantiationError('Failed to instantiate service template')
+
+        with self.model_storage._all_api_kwargs['session'].no_autoflush:
+            # TODO: try this one as well
+            # consumption.ServiceInstance(context).consume()
+            consumption.ConsumerChain(
+                context,
+                (
+                    consumption.SatisfyRequirements,
+                    consumption.ValidateCapabilities,
+                    consumption.FindHosts,
+                    consumption.ConfigureOperations
+                )).consume()
+            if context.validation.dump_issues():
+                raise exceptions.InstantiationError('Failed to instantiate service template')
 
         # If the user didn't enter a name for this service, we'll want to auto generate it.
         # But how will we ensure a unique but simple name? We'll append the services' unique id

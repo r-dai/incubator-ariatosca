@@ -1237,7 +1237,7 @@ class RequirementTemplateBase(TemplateModelMixin):
 
         # Find first node that matches the type
         elif self.target_node_type is not None:
-            for target_node_template in context.modeling.template.node_templates.itervalues():
+            for target_node_template in self.node_template.service_template.node_templates.values():
                 if self.target_node_type.get_descendant(target_node_template.type.name) is None:
                     continue
 
