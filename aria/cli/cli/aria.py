@@ -19,7 +19,7 @@ import sys
 import difflib
 import StringIO
 import traceback
-from functools import wraps
+from functools import wraps, partial
 
 import click
 

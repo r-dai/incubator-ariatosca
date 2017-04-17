@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+bla bla bla
+
 set -e
 
 TEMP_DIR="/tmp"

@@ -90,8 +90,12 @@ class WorkflowRunner(object):
             tasks_graph=self._tasks_graph)
 
     @property
+    def execution_id(self):
+        return self._execution_id
+
+    @property
     def execution(self):
-        return self._model_storage.execution.get(self._execution_id)
+        return self._model_storage.execution.get(self.execution_id)
 
     @property
     def service(self):
@@ -117,7 +121,7 @@ class WorkflowRunner(object):
 
         execution.inputs = modeling_utils.create_inputs(inputs, workflow_inputs)
         # TODO: these two following calls should execute atomically
-        self._validate_no_active_executions(execution)
+        # self._validate_no_active_executions(execution)
         self._model_storage.execution.put(execution)
         return execution
 

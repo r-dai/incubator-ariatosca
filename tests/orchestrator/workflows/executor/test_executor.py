@@ -15,6 +15,7 @@
 
 import logging
 import uuid
+from collections import namedtuple
 from contextlib import contextmanager
 
 import pytest
@@ -119,6 +120,7 @@ class MockTask(object):
         self.ignore_failure = False
         self.interface_name = 'interface_name'
         self.operation_name = 'operation_name'
+        self.actor = namedtuple('actor', 'name')(name='actor_name')
         self.model_task = None
 
         for state in models.Task.STATES:

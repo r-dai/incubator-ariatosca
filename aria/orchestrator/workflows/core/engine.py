@@ -20,6 +20,7 @@ The workflow engine. Executes workflows
 import time
 from datetime import datetime
 
+import logging
 import networkx
 
 from aria import logger
@@ -40,6 +41,7 @@ class Engine(logger.LoggerMixin):
 
     def __init__(self, executor, workflow_context, tasks_graph, **kwargs):
         super(Engine, self).__init__(**kwargs)
+        self.logger.addHandler(logging.NullHandler())
         self._workflow_context = workflow_context
         self._execution_graph = networkx.DiGraph()
         self._executor = executor

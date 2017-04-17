@@ -15,7 +15,9 @@
 
 import os
 
+from aria.cli import execution_logging
 from .. import utils
+from .. import logger as cli_logger
 from ..table import print_data
 from ..cli import aria
 from ...modeling.models import Execution
@@ -141,12 +143,18 @@ def start(workflow_name,
 
     logger.info('Starting {0}execution. Press Ctrl+C cancel'.format('dry ' if dry else ''))
     execution_thread.start()
+
+    log_consumer = cli_logger.ModelLogConsumer(model_storage, workflow_runner.execution_id)
     try:
         while execution_thread.is_alive():
-            # using join without a timeout blocks and ignores KeyboardInterrupt
-            execution_thread.join(1)
+            for log in log_consumer:
+                execution_logging.load(log).log()
+
     except KeyboardInterrupt:
         _cancel_execution(workflow_runner, execution_thread, logger)
+
+    for log in log_consumer:
+        execution_logging.load(log).log()
 
     # raise any errors from the execution thread (note these are not workflow execution errors)
     execution_thread.raise_error_if_exists()

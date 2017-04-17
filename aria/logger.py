@@ -177,10 +177,12 @@ class _SQLAlchemyHandler(logging.Handler):
         log = self._cls(
             execution_fk=self._execution_id,
             task_fk=record.task_id,
-            actor=record.prefix,
             level=record.levelname,
             msg=str(record.msg),
             created_at=created_at,
+
+            # Not mandatory.
+            traceback=getattr(record, 'traceback', None)
         )
         self._session.add(log)
 
