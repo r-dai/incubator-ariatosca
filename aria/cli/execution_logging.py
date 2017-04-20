@@ -15,21 +15,22 @@
 
 from StringIO import StringIO
 
+from .color import StyledString
 from . import logger
 from .env import env
 
 DEFAULT_FORMATTING = {
     logger.NO_VERBOSE: {'message': '{item.msg}'},
     logger.LOW_VERBOSE: {
-        'message': '{timestamp} | {item.level[0]} | {item.msg}',
-        'timestamp': '%H:%M:%S'
+        'message': '{timestamp} | {level} | {item.msg}',
+        'timestamp': '%H:%M:%S',
     },
     logger.MEDIUM_VERBOSE: {
-        'message': '{timestamp} | {item.level[0]} | {implementation} | {item.msg} ',
+        'message': '{timestamp} | {level} | {implementation} | {item.msg} ',
         'timestamp': '%H:%M:%S'
     },
     logger.HIGH_VERBOSE: {
-        'message': '{timestamp} | {item.level[0]} | {implementation}({inputs}) | {item.msg} ',
+        'message': '{timestamp} | {level} | {implementation}({inputs}) | {item.msg} ',
         'timestamp': '%H:%M:%S'
     },
 }
@@ -41,8 +42,16 @@ def _str(item, formats=None):
     formatting = formats.get(env.logging.verbosity_level,
                              DEFAULT_FORMATTING[env.logging.verbosity_level])
     msg = StringIO()
-
     formatting_kwargs = dict(item=item)
+
+    # region level styling
+
+    levels_format = {
+        'debug': (StyledString.back.LIGHTRED_EX,)
+    }
+    formatting_kwargs['level'] = StyledString(item.level[0], *levels_format.get(item.level.lower(), []))
+
+    # endregion level styling
 
     if item.task:
         formatting_kwargs['implementation'] = item.task.implementation

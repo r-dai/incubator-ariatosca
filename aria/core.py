@@ -77,8 +77,8 @@ class Core(object):
             consumption.ConsumerChain(
                 context,
                 (
-                    consumption.SatisfyRequirements,
-                    consumption.ValidateCapabilities,
+                    # consumption.SatisfyRequirements,
+                    # consumption.ValidateCapabilities,
                     consumption.FindHosts,
                     consumption.ConfigureOperations
                 )).consume()
