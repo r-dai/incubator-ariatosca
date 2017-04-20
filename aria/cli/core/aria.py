@@ -281,12 +281,12 @@ def argument(*args, **kwargs):
 
 class Options(object):
     def __init__(self):
-        """The options api is nicer when you use each option by calling
+        """The options API is nicer when you use each option by calling
         `@aria.options.some_option` instead of `@aria.some_option`.
 
         Note that some options are attributes and some are static methods.
         The reason for that is that we want to be explicit regarding how
-        a developer sees an option. It it can receive arguments, it's a
+        a developer sees an option. If it can receive arguments, it's a
         method - if not, it's an attribute.
         """
         self.version = click.option(
@@ -324,6 +324,30 @@ class Options(object):
             '--service-template-filename',
             default=defaults.SERVICE_TEMPLATE_FILENAME,
             help=helptexts.SERVICE_TEMPLATE_FILENAME)
+
+        self.display_json = click.option(
+            '-j',
+            '--json',
+            is_flag=True,
+            help=helptexts.DISPLAY_JSON)
+
+        self.display_yaml = click.option(
+            '-y',
+            '--yaml',
+            is_flag=True,
+            help=helptexts.DISPLAY_YAML)
+
+        self.display_types = click.option(
+            '-t',
+            '--types',
+            is_flag=True,
+            help=helptexts.DISPLAY_TYPES)
+
+        self.display_graph = click.option(
+            '-g',
+            '--graph',
+            is_flag=True,
+            help=helptexts.DISPLAY_GRAPH)
 
     @staticmethod
     def verbose(expose_value=False):

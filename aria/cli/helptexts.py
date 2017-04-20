@@ -29,7 +29,7 @@ EXECUTION_ID = "The unique identifier for the execution"
 SERVICE_TEMPLATE_PATH = "The path to the application's service template file"
 SERVICE_TEMPLATE_FILENAME = (
     "The name of the archive's main service template file. "
-    "This is only relevant if uploading a (non-csar) archive")
+    "This is only relevant if uploading a (non-CSAR) archive")
 INPUTS_PARAMS_USAGE = (
     '(Can be provided as wildcard based paths '
     '(*.yaml, /my_inputs/, etc..) to YAML files, a JSON string or as '
@@ -47,3 +47,8 @@ IGNORE_AVAILABLE_NODES = "Delete the service even if it has available nodes"
 SORT_BY = "Key for sorting the list"
 DESCENDING = "Sort list in descending order [default: False]"
 JSON_OUTPUT = "Output logs in a consumable JSON format"
+
+DISPLAY_JSON = "Display in JSON format"
+DISPLAY_YAML = "Display in YAML format"
+DISPLAY_TYPES = "Display only the type hierarchies"
+DISPLAY_GRAPH = "Display only the node graph"

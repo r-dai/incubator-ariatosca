@@ -23,6 +23,8 @@ from .. import utils
 from ..core import aria
 from ...core import Core
 from ...storage import exceptions as storage_exceptions
+from ...parser import consumption
+from ...utils import (formatting, collections, console)
 
 
 DESCRIPTION_FIELD_LENGTH_LIMIT = 20
@@ -45,7 +47,7 @@ def service_templates():
 @aria.pass_model_storage
 @aria.pass_logger
 def show(service_template_name, model_storage, logger):
-    """Show information for a specific service templates
+    """Show information for a specific service template
 
     `SERVICE_TEMPLATE_NAME` is the name of the service template to show information on.
     """
@@ -135,6 +137,7 @@ def store(service_template_path, service_template_name, service_template_filenam
 @aria.pass_logger
 def delete(service_template_name, model_storage, resource_storage, plugin_manager, logger):
     """Delete a service template
+
     `SERVICE_TEMPLATE_NAME` is the name of the service template to delete.
     """
     logger.info('Deleting service template {0}...'.format(service_template_name))
@@ -172,7 +175,7 @@ def validate(service_template, service_template_filename,
              model_storage, resource_storage, plugin_manager, logger):
     """Validate a service template
 
-    `SERVICE_TEMPLATE` is the path or url of the service template or archive to validate.
+    `SERVICE_TEMPLATE` is the path or URL of the service template or archive to validate.
     """
     logger.info('Validating service template: {0}'.format(service_template))
     service_template_path = service_template_utils.get(service_template, service_template_filename)
@@ -181,21 +184,49 @@ def validate(service_template, service_template_filename,
     logger.info('Service template validated successfully')
 
 
+@service_templates.command(name='display',
+                           short_help='Display service template information')
+@aria.argument('service-template-name')
+@aria.options.verbose()
+@aria.options.display_json
+@aria.options.display_yaml
+@aria.options.display_types
+@aria.pass_model_storage
+@aria.pass_logger
+def display(service_template_name, model_storage, json, yaml, types, logger):
+    """Display information for a specific service template
+
+    `SERVICE_TEMPLATE_NAME` is the name of the service template to display information on.
+    """
+    logger.info('Displaying service template {0}...'.format(service_template_name))
+    service_template = model_storage.service_template.get_by_name(service_template_name)
+    consumption.ConsumptionContext()
+    if types:
+        service_template.dump_types()
+    else:
+        if json:
+            console.puts(formatting.json_dumps(collections.prune(service_template.as_raw)))
+        elif yaml:
+            console.puts(formatting.yaml_dumps(collections.prune(service_template.as_raw)))
+        else:
+            service_template.dump()
+
+
 @service_templates.command(name='create-archive',
-                           short_help='Create a csar archive')
+                           short_help='Create a CSAR archive')
 @aria.argument('service-template-path')
 @aria.argument('destination')
 @aria.options.verbose()
 @aria.pass_logger
 def create_archive(service_template_path, destination, logger):
-    """Create a csar archive
+    """Create a CSAR archive
 
     `service_template_path` is the path of the service template to create the archive from
-    `destination` is the path of the output csar archive
+    `destination` is the path of the output CSAR archive
     """
-    logger.info('Creating a csar archive')
+    logger.info('Creating a CSAR archive')
     csar.write(os.path.dirname(service_template_path), service_template_path, destination, logger)
-    logger.info('Csar archive created at {0}'.format(destination))
+    logger.info('CSAR archive created at {0}'.format(destination))
 
 
 def print_service_template_inputs(model_storage, service_template_name, logger):

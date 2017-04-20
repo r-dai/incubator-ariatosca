@@ -25,6 +25,8 @@ from ..core import aria
 from ...core import Core
 from ...modeling import exceptions as modeling_exceptions
 from ...storage import exceptions as storage_exceptions
+from ...parser import consumption
+from ...utils import (formatting, collections, console)
 
 
 SERVICE_COLUMNS = ['id', 'name', 'service_template_name', 'created_at', 'updated_at']
@@ -177,3 +179,31 @@ def inputs(service_name, model_storage, logger):
         logger.info(inputs_string.getvalue())
     else:
         logger.info('\tNo inputs')
+
+
+@services.command(name='display',
+                  short_help='Display service information')
+@aria.argument('service-name')
+@aria.options.verbose()
+@aria.options.display_json
+@aria.options.display_yaml
+@aria.options.display_graph
+@aria.pass_model_storage
+@aria.pass_logger
+def display(service_name, model_storage, json, yaml, graph, logger):
+    """Display information for a specific service template
+
+    `SERVICE_NAME` is the name of the service to display information on.
+    """
+    logger.info('Displaying service {0}...'.format(service_name))
+    service = model_storage.service.get_by_name(service_name)
+    consumption.ConsumptionContext()
+    if graph:
+        service.dump_graph()
+    else:
+        if json:
+            console.puts(formatting.json_dumps(collections.prune(service.as_raw)))
+        elif yaml:
+            console.puts(formatting.yaml_dumps(collections.prune(service.as_raw)))
+        else:
+            service.dump()
