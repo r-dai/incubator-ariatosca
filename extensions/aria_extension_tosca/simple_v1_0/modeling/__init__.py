@@ -164,6 +164,8 @@ def create_node_template_model(context, service_template, node_template):
 
     create_parameter_models_from_values(model.properties,
                                         node_template._get_property_values(context))
+    create_parameter_models_from_values(model.attributes,
+                                        node_template._get_attribute_default_values(context))
     create_interface_template_models(context, service_template, model.interface_templates,
                                      node_template._get_interfaces(context))
 

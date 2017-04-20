@@ -503,6 +503,10 @@ class NodeTemplateBase(TemplateModelMixin):
         return relationship.many_to_many(cls, 'parameter', prefix='properties', dict_key='name')
 
     @declared_attr
+    def attributes(cls):
+        return relationship.many_to_many(cls, 'parameter', prefix='attributes', dict_key='name')
+
+    @declared_attr
     def interface_templates(cls):
         return relationship.one_to_many(cls, 'interface_template', dict_key='name')
 
@@ -543,6 +547,7 @@ class NodeTemplateBase(TemplateModelMixin):
             ('min_instances', self.min_instances),
             ('max_instances', self.max_instances),
             ('properties', formatting.as_raw_dict(self.properties)),
+            ('attributes', formatting.as_raw_dict(self.properties)),
             ('interface_templates', formatting.as_raw_list(self.interface_templates)),
             ('artifact_templates', formatting.as_raw_list(self.artifact_templates)),
             ('capability_templates', formatting.as_raw_list(self.capability_templates)),
@@ -559,13 +564,22 @@ class NodeTemplateBase(TemplateModelMixin):
                            runtime_properties={},
                            node_template=self)
         utils.instantiate_dict(node, node.properties, self.properties)
+        utils.instantiate_dict(node, node.attributes, self.attributes)
         utils.instantiate_dict(node, node.interfaces, self.interface_templates)
         utils.instantiate_dict(node, node.artifacts, self.artifact_templates)
         utils.instantiate_dict(node, node.capabilities, self.capability_templates)
+
+        # Default attributes
+        if 'tosca_name' in node.attributes:
+            node.attributes['tosca_name'].value = self.name
+        if 'tosca_id' in node.attributes:
+            node.attributes['tosca_id'].value = name
+
         return node
 
     def validate(self):
         utils.validate_dict_values(self.properties)
+        utils.validate_dict_values(self.attributes)
         utils.validate_dict_values(self.interface_templates)
         utils.validate_dict_values(self.artifact_templates)
         utils.validate_dict_values(self.capability_templates)
@@ -573,6 +587,7 @@ class NodeTemplateBase(TemplateModelMixin):
 
     def coerce_values(self, container, report_issues):
         utils.coerce_dict_values(self, self.properties, report_issues)
+        utils.coerce_dict_values(self, self.attributes, report_issues)
         utils.coerce_dict_values(self, self.interface_templates, report_issues)
         utils.coerce_dict_values(self, self.artifact_templates, report_issues)
         utils.coerce_dict_values(self, self.capability_templates, report_issues)
@@ -592,6 +607,7 @@ class NodeTemplateBase(TemplateModelMixin):
                 if self.max_instances is not None
                 else ' or more'))
             utils.dump_dict_values(self.properties, 'Properties')
+            utils.dump_dict_values(self.attributes, 'Attributes')
             utils.dump_interfaces(self.interface_templates)
             utils.dump_dict_values(self.artifact_templates, 'Artifact templates')
             utils.dump_dict_values(self.capability_templates, 'Capability templates')

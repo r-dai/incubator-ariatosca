@@ -15,6 +15,8 @@
 
 # pylint: disable=no-self-argument, no-member, abstract-method
 
+import datetime
+
 from sqlalchemy import (
     Column,
     Text,
@@ -22,6 +24,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.declarative import declared_attr
 
+from ..parser import dsl_specification
 from ..parser.consumption import ConsumptionContext
 from ..utils import collections, formatting, console
 from .mixins import InstanceModelMixin, TemplateModelMixin
@@ -70,30 +73,37 @@ class ParameterBase(TemplateModelMixin):
 
     def coerce_values(self, container, report_issues):
         if self.value is not None:
-            self.value = utils.coerce_value(container, self.value,
-                                            report_issues)
+            final, value = utils.coerce_value(container, self.value,
+                                              report_issues)
+            # TODO: final?
+            self.value = value
 
     def dump(self):
         context = ConsumptionContext.get_thread_local()
         if self.type_name is not None:
             console.puts('{0}: {1} ({2})'.format(
                 context.style.property(self.name),
-                context.style.literal(self.value),
+                context.style.literal(formatting.as_raw(self.value)),
                 context.style.type(self.type_name)))
         else:
             console.puts('{0}: {1}'.format(
                 context.style.property(self.name),
-                context.style.literal(self.value)))
+                context.style.literal(formatting.as_raw(self.value))))
         if self.description:
             console.puts(context.style.meta(self.description))
 
     def unwrap(self):
         return self.name, self.value
 
+    @dsl_specification('3.2.1-2', 'tosca-simple-1.0')
     @classmethod
     def wrap(cls, name, value, description=None):
         """
         Wraps an arbitrary value as a parameter. The type will be guessed via introspection.
+
+        For primitive types, we will prefer their TOSCA aliases. See the `TOSCA Simple Profile v1.0
+        cos01 specification <http://docs.oasis-open.org/tosca/TOSCA-Simple-Profile-YAML/v1.0/cos01
+        /TOSCA-Simple-Profile-YAML-v1.0-cos01.html#_Toc373867862>`__
 
         :param name: Parameter name
         :type name: basestring
@@ -101,11 +111,25 @@ class ParameterBase(TemplateModelMixin):
         :param description: Description (optional)
         :type description: basestring
         """
-        return cls(name=name,
-                   type_name=formatting.full_type_name(value)
-                   if value is not None else None,
-                   value=value,
-                   description=description)
+        from . import models
+        if value is None:
+            type_name = 'null'
+        elif isinstance(value, basestring):
+            type_name = 'string'
+        elif isinstance(value, int):
+            type_name = 'integer'
+        elif isinstance(value, float):
+            type_name = 'float'
+        elif isinstance(value, bool):
+            type_name = 'boolean'
+        elif isinstance(value, datetime.datetime):
+            type_name = 'timestamp'
+        else:
+            type_name = formatting.full_type_name(value)
+        return models.Parameter(name=name,
+                                type_name=type_name,
+                                value=value,
+                                description=description)
 
 
 class TypeBase(InstanceModelMixin):

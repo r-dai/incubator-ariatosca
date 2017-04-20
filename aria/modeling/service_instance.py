@@ -515,6 +515,10 @@ class NodeBase(InstanceModelMixin):
     def properties(cls):
         return relationship.many_to_many(cls, 'parameter', prefix='properties', dict_key='name')
 
+    @declared_attr
+    def attributes(cls):
+        return relationship.many_to_many(cls, 'parameter', prefix='attributes', dict_key='name')
+
     # endregion
 
     description = Column(Text)
@@ -649,6 +653,7 @@ class NodeBase(InstanceModelMixin):
             ('name', self.name),
             ('type_name', self.type.name),
             ('properties', formatting.as_raw_dict(self.properties)),
+            ('attributes', formatting.as_raw_dict(self.properties)),
             ('interfaces', formatting.as_raw_list(self.interfaces)),
             ('artifacts', formatting.as_raw_list(self.artifacts)),
             ('capabilities', formatting.as_raw_list(self.capabilities)),
@@ -667,6 +672,7 @@ class NodeBase(InstanceModelMixin):
         # TODO: validate that node template is of type?
 
         utils.validate_dict_values(self.properties)
+        utils.validate_dict_values(self.attributes)
         utils.validate_dict_values(self.interfaces)
         utils.validate_dict_values(self.artifacts)
         utils.validate_dict_values(self.capabilities)
@@ -674,6 +680,7 @@ class NodeBase(InstanceModelMixin):
 
     def coerce_values(self, container, report_issues):
         utils.coerce_dict_values(self, self.properties, report_issues)
+        utils.coerce_dict_values(self, self.attributes, report_issues)
         utils.coerce_dict_values(self, self.interfaces, report_issues)
         utils.coerce_dict_values(self, self.artifacts, report_issues)
         utils.coerce_dict_values(self, self.capabilities, report_issues)
@@ -686,6 +693,7 @@ class NodeBase(InstanceModelMixin):
             console.puts('Type: {0}'.format(context.style.type(self.type.name)))
             console.puts('Template: {0}'.format(context.style.node(self.node_template.name)))
             utils.dump_dict_values(self.properties, 'Properties')
+            utils.dump_dict_values(self.attributes, 'Attributes')
             utils.dump_interfaces(self.interfaces)
             utils.dump_dict_values(self.artifacts, 'Artifacts')
             utils.dump_dict_values(self.capabilities, 'Capabilities')

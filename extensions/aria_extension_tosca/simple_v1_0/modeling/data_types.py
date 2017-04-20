@@ -327,20 +327,20 @@ def get_data_type_value(context, presentation, field_name, type_name):
 
 PRIMITIVE_DATA_TYPES = {
     # YAML 1.2:
-    'tag:yaml.org,2002:str': str,
+    'tag:yaml.org,2002:str': unicode,
     'tag:yaml.org,2002:integer': int,
     'tag:yaml.org,2002:float': float,
     'tag:yaml.org,2002:bool': bool,
     'tag:yaml.org,2002:null': None.__class__,
 
     # TOSCA aliases:
-    'string': str,
+    'string': unicode,
     'integer': int,
     'float': float,
     'boolean': bool,
     'null': None.__class__}
 
-@dsl_specification('3.2.1', 'tosca-simple-1.0')
+@dsl_specification('3.2.1-1', 'tosca-simple-1.0')
 def get_primitive_data_type(type_name):
     """
     Many of the types we use in this profile are built-in types from the YAML 1.2 specification

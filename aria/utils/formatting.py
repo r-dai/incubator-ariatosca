@@ -163,8 +163,8 @@ def as_raw(value):
             value = value()
     elif isinstance(value, list):
         value = list(value)
-        for i, _ in enumerate(value):
-            value[i] = as_raw(value[i])
+        for i, v in enumerate(value):
+            value[i] = as_raw(v)
     elif isinstance(value, dict):
         value = dict(value)
         for k, v in value.iteritems():

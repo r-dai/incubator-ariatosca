@@ -23,6 +23,7 @@ from aria.parser.validation import Issue
 from aria.modeling.exceptions import CannotEvaluateFunctionException
 from aria.modeling.functions import Function
 
+
 #
 # Intrinsic
 #
@@ -39,8 +40,8 @@ class Concat(Function):
 
         if not isinstance(argument, list):
             raise InvalidValueError(
-                'function "concat" argument must be a list of string expressions: %s'
-                % safe_repr(argument),
+                'function "concat" argument must be a list of string expressions: {0}'
+                .format(safe_repr(argument)),
                 locator=self.locator)
 
         string_expressions = []
@@ -59,12 +60,16 @@ class Concat(Function):
         return {'concat': string_expressions}
 
     def _evaluate(self, context, container):
+        final = True
         value = StringIO()
         for e in self.string_expressions:
             if hasattr(e, '_evaluate'):
-                e = e._evaluate(context, container)
+                child_final, e = e._evaluate(context, container)
+                if not child_final:
+                    final = False
             value.write(str(e))
-        return value.getvalue()
+        return final, value.getvalue()
+
 
 @dsl_specification('4.3.2', 'tosca-simple-1.0')
 class Token(Function):
@@ -77,8 +82,8 @@ class Token(Function):
         self.locator = presentation._locator
 
         if (not isinstance(argument, list)) or (len(argument) != 3):
-            raise InvalidValueError('function "token" argument must be a list of 3 parameters: %s'
-                                    % safe_repr(argument),
+            raise InvalidValueError('function "token" argument must be a list of 3 parameters: {0}'
+                                    .format(safe_repr(argument)),
                                     locator=self.locator)
 
         self.string_with_tokens = parse_string_expression(context, presentation, 'token', 0,
@@ -103,6 +108,7 @@ class Token(Function):
         string_with_tokens = self.string_with_tokens
         if hasattr(string_with_tokens, '_evaluate'):
             string_with_tokens = string_with_tokens._evaluate(context, container) # pylint: disable=no-member
+        # TODO
 
 #
 # Property
@@ -127,8 +133,8 @@ class GetInput(Function):
                                                            'inputs', self.input_property_name)
             if the_input is None:
                 raise InvalidValueError(
-                    'function "get_input" argument is not a valid input name: %s'
-                    % safe_repr(argument),
+                    'function "get_input" argument is not a valid input name: {0}'
+                    .format(safe_repr(argument)),
                     locator=self.locator)
 
     @property
@@ -141,7 +147,8 @@ class GetInput(Function):
         the_input = context.modeling.instance.inputs.get(
             self.input_property_name,
             context.modeling.template.inputs.get(self.input_property_name))
-        return as_raw(the_input.value) if the_input is not None else None
+        return True, (as_raw(the_input.value) if the_input is not None else None)
+
 
 @dsl_specification('4.4.2', 'tosca-simple-1.0')
 class GetProperty(Function):
@@ -156,8 +163,7 @@ class GetProperty(Function):
         if (not isinstance(argument, list)) or (len(argument) < 2):
             raise InvalidValueError(
                 'function "get_property" argument must be a list of at least 2 string expressions: '
-                '%s'
-                % safe_repr(argument),
+                '{0}'.format(safe_repr(argument)),
                 locator=self.locator)
 
         self.modelable_entity_name = parse_modelable_entity_name(context, presentation,
@@ -197,25 +203,16 @@ class GetProperty(Function):
                 properties = modelable_entity.properties
                 nested_property_name_or_index = self.nested_property_name_or_index
 
-            if properties:
-                found = True
-                value = properties
-                for name in nested_property_name_or_index:
-                    if (isinstance(value, dict) and (name in value)) \
-                        or (isinstance(value, list) and name < len(list)):
-                        value = value[name]
-                        if hasattr(value, '_evaluate'):
-                            value = value._evaluate(context, modelable_entity)
-                    else:
-                        found = False
-                        break
-                if found:
-                    return as_raw(value)
+            found, final, value = get_modelable_entity_parameter(context, modelable_entity, properties,
+                                                          nested_property_name_or_index)
+            if found:
+                return final, as_raw(value.value)
 
         raise InvalidValueError(
-            'function "get_property" could not find "%s" in modelable entity "%s"' \
-            % ('.'.join(self.nested_property_name_or_index), self.modelable_entity_name),
+            'function "get_property" could not find "{0}" in modelable entity "{1}"'
+            .format('.'.join(self.nested_property_name_or_index), self.modelable_entity_name),
             locator=self.locator)
+
 
 #
 # Attribute
@@ -234,21 +231,36 @@ class GetAttribute(Function):
         if (not isinstance(argument, list)) or (len(argument) < 2):
             raise InvalidValueError(
                 'function "get_attribute" argument must be a list of at least 2 string expressions:'
-                ' %s'
-                % safe_repr(argument),
+                ' {0}'.format(safe_repr(argument)),
                 locator=self.locator)
 
         self.modelable_entity_name = parse_modelable_entity_name(context, presentation,
                                                                  'get_attribute', 0, argument[0])
         # The first of these will be tried as a req-or-cap name:
-        self.nested_property_name_or_index = argument[1:]
+        self.nested_attribute_name_or_index = argument[1:]
 
     @property
     def as_raw(self):
-        return {'get_attribute': [self.modelable_entity_name] + self.nested_property_name_or_index}
+        return {'get_attribute': [self.modelable_entity_name] + self.nested_attribute_name_or_index}
 
     def _evaluate(self, context, container): # pylint: disable=no-self-use,unused-argument
         raise CannotEvaluateFunctionException()
+        
+        modelable_entities = get_modelable_entities(context, container, self.locator,
+                                                    self.modelable_entity_name)
+        for modelable_entity in modelable_entities:
+            attributes = modelable_entity.attributes
+            nested_attribute_name_or_index = self.nested_attribute_name_or_index
+
+            found, value = get_modelable_entity_parameter(context, modelable_entity, attributes,
+                                                          nested_attribute_name_or_index)
+            if found:
+                return False, as_raw(value.value)
+
+        raise InvalidValueError(
+            'function "get_attribute" could not find "{0}" in modelable entity "{1}"'
+            .format('.'.join(self.nested_attribute_name_or_index), self.modelable_entity_name),
+            locator=self.locator)
 
 #
 # Operation
@@ -266,8 +278,8 @@ class GetOperationOutput(Function):
 
         if (not isinstance(argument, list)) or (len(argument) != 4):
             raise InvalidValueError(
-                'function "get_operation_output" argument must be a list of 4 parameters: %s'
-                % safe_repr(argument),
+                'function "get_operation_output" argument must be a list of 4 parameters: {0}'
+                .format(safe_repr(argument)),
                 locator=self.locator)
 
         self.modelable_entity_name = parse_string_expression(context, presentation,
@@ -295,6 +307,7 @@ class GetOperationOutput(Function):
         return {'get_operation_output': [self.modelable_entity_name, interface_name, operation_name,
                                          output_variable_name]}
 
+
 #
 # Navigation
 #
@@ -316,8 +329,8 @@ class GetNodesOfType(Function):
             node_types = context.presentation.get('service_template', 'node_types')
             if (node_types is None) or (self.node_type_name not in node_types):
                 raise InvalidValueError(
-                    'function "get_nodes_of_type" argument is not a valid node type name: %s'
-                    % safe_repr(argument),
+                    'function "get_nodes_of_type" argument is not a valid node type name: {0}'
+                    .format(safe_repr(argument)),
                     locator=self.locator)
 
     @property
@@ -329,6 +342,7 @@ class GetNodesOfType(Function):
 
     def _evaluate(self, context, container):
         pass
+
 
 #
 # Artifact
@@ -346,8 +360,8 @@ class GetArtifact(Function):
 
         if (not isinstance(argument, list)) or (len(argument) < 2) or (len(argument) > 4):
             raise InvalidValueError(
-                'function "get_artifact" argument must be a list of 2 to 4 parameters: %s'
-                % safe_repr(argument),
+                'function "get_artifact" argument must be a list of 2 to 4 parameters: {0}'
+                .format(safe_repr(argument)),
                 locator=self.locator)
 
         self.modelable_entity_name = parse_string_expression(context, presentation, 'get_artifact',
@@ -370,6 +384,7 @@ class GetArtifact(Function):
             location = as_raw(location)
         return {'get_artifacts': [self.modelable_entity_name, artifact_name, location, self.remove]}
 
+
 #
 # Utils
 #
@@ -386,6 +401,7 @@ def get_function(context, presentation, value):
                 return True, None
     return False, None
 
+
 def parse_string_expression(context, presentation, name, index, explanation, value): # pylint: disable=unused-argument
     is_function, func = get_function(context, presentation, value)
     if is_function:
@@ -393,6 +409,7 @@ def parse_string_expression(context, presentation, name, index, explanation, val
     else:
         value = str(value)
     return value
+
 
 def parse_int(context, presentation, name, index, explanation, value): # pylint: disable=unused-argument
     if not isinstance(value, int):
@@ -403,10 +420,12 @@ def parse_int(context, presentation, name, index, explanation, value): # pylint:
                                 presentation._locator)
     return value
 
+
 def parse_bool(context, presentation, name, index, explanation, value): # pylint: disable=unused-argument
     if not isinstance(value, bool):
         raise invalid_value(name, index, 'a boolean', explanation, value, presentation._locator)
     return value
+
 
 def parse_modelable_entity_name(context, presentation, name, index, value):
     value = parse_string_expression(context, presentation, name, index, 'the modelable entity name',
@@ -436,10 +455,11 @@ def parse_modelable_entity_name(context, presentation, name, index, value):
             or {}
         if (value not in node_templates) and (value not in relationship_templates):
             raise InvalidValueError(
-                'function "%s" parameter %d is not a valid modelable entity name: %s'
-                % (name, index + 1, safe_repr(value)),
+                'function "{0}" parameter {1:d} is not a valid modelable entity name: {2}'
+                .format(name, index + 1, safe_repr(value)),
                 locator=presentation._locator, level=Issue.BETWEEN_TYPES)
     return value
+
 
 def parse_self(presentation):
     from .templates import NodeTemplate, RelationshipTemplate
@@ -455,6 +475,7 @@ def parse_self(presentation):
     else:
         return parse_self(presentation._container)
 
+
 @dsl_specification('4.1', 'tosca-simple-1.0')
 def get_modelable_entities(context, container, locator, modelable_entity_name):
     """
@@ -465,7 +486,7 @@ def get_modelable_entities(context, container, locator, modelable_entity_name):
     if modelable_entity_name == 'SELF':
         return get_self(context, container)
     elif modelable_entity_name == 'HOST':
-        return get_host(context, container)
+        return get_hosts(context, container)
     elif modelable_entity_name == 'SOURCE':
         return get_source(context, container)
     elif modelable_entity_name == 'TARGET':
@@ -483,9 +504,10 @@ def get_modelable_entities(context, container, locator, modelable_entity_name):
         if modelable_entity_name in relationship_templates:
             return [relationship_templates[modelable_entity_name]]
 
-    raise InvalidValueError('function "get_property" could not find modelable entity "%s"'
-                            % modelable_entity_name,
+    raise InvalidValueError('function "get_property" could not find modelable entity "{0}"'
+                            .format(modelable_entity_name),
                             locator=locator)
+
 
 def get_self(context, container): # pylint: disable=unused-argument
     """
@@ -495,7 +517,8 @@ def get_self(context, container): # pylint: disable=unused-argument
 
     return [container]
 
-def get_host(context, container): # pylint: disable=unused-argument
+
+def get_hosts(context, container): # pylint: disable=unused-argument
     """
     A TOSCA orchestrator will interpret this keyword to refer to the all nodes that "host" the node
     using this reference (i.e., as identified by its HostedOn relationship).
@@ -509,6 +532,7 @@ def get_host(context, container): # pylint: disable=unused-argument
 
     return []
 
+
 def get_source(context, container): # pylint: disable=unused-argument
     """
     A TOSCA orchestrator will interpret this keyword as the Node Template instance that is at the
@@ -517,20 +541,50 @@ def get_source(context, container): # pylint: disable=unused-argument
 
     return []
 
+
 def get_target(context, container): # pylint: disable=unused-argument
     """
     A TOSCA orchestrator will interpret this keyword as the Node Template instance that is at the
     target end of the relationship that contains the referencing function.
     """
 
+
+def get_modelable_entity_parameter(context, modelable_entity, parameters,
+                                   nested_parameter_name_or_index):
+    if not parameters:
+        return False, True, None
+
+    found = True
+    final = True
+    value = parameters
+
+    for name in nested_parameter_name_or_index:
+        if (isinstance(value, dict) and (name in value)) \
+            or (isinstance(value, list) and name < len(list)):
+            value = value[name]
+            if hasattr(value, '_evaluate'):
+                child_final, value = value._evaluate(context, modelable_entity)
+                if not child_final:
+                    final = False
+        else:
+            found = False
+            break
+
+    return found, final, value
+
+
 def invalid_modelable_entity_name(name, index, value, locator, contexts):
-    return InvalidValueError('function "%s" parameter %d can be "%s" only in %s'
-                             % (name, index + 1, value, contexts),
+    return InvalidValueError('function "{0}" parameter {1:d} can be "{2}" only in {3}'
+                             .format(name, index + 1, value, contexts),
                              locator=locator, level=Issue.FIELD)
+
 
 def invalid_value(name, index, the_type, explanation, value, locator):
     return InvalidValueError(
-        'function "%s" %s is not %s%s: %s'
-        % (name, ('parameter %d' % (index + 1)) if index is not None else 'argument',
-           the_type, (', %s' % explanation) if explanation is not None else '', safe_repr(value)),
+        'function "{0}" {1} is not {2}{3}: {4}'
+        .format(name,
+                'parameter {0:d}'.format(index + 1) if index is not None else 'argument',
+                the_type,
+                ', {0}'.format(explanation) if explanation is not None else '',
+                safe_repr(value)),
         locator=locator, level=Issue.FIELD)

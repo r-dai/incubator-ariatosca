@@ -20,7 +20,6 @@ from StringIO import StringIO
 from . import exceptions
 from ..parser.consumption import ConsumptionContext
 from ..parser.exceptions import InvalidValueError
-from ..parser.presentation import Value
 from ..utils.collections import OrderedDict
 from ..utils.console import puts
 from ..utils.type import validate_value_type
@@ -110,25 +109,38 @@ def _merge_and_validate_inputs(inputs, template_inputs):
 
 
 def coerce_value(container, value, report_issues=False):
-    if isinstance(value, Value):
-        value = value.value
+    final = True
 
     if isinstance(value, list):
-        return [coerce_value(container, v, report_issues) for v in value]
+        coerced_list = []
+        for v in value:
+            child_final, v = coerce_value(container, v, report_issues)
+            if not child_final:
+                final = False
+            coerced_list.append(v)
+        value = coerced_list
     elif isinstance(value, dict):
-        return OrderedDict((k, coerce_value(container, v, report_issues))
-                           for k, v in value.iteritems())
+        coerced_dict = OrderedDict()
+        for k, v in value.iteritems():
+            child_final, v = coerce_value(container, v, report_issues)
+            if not child_final:
+                final = False
+            coerced_dict[k] = v
+        value = coerced_dict
     elif hasattr(value, '_evaluate'):
         context = ConsumptionContext.get_thread_local()
         try:
-            value = value._evaluate(context, container)
-            value = coerce_value(container, value, report_issues)
+            final, value = value._evaluate(context, container)
+            child_final, value = coerce_value(container, value, report_issues)
+            if not child_final:
+                final = False
         except exceptions.CannotEvaluateFunctionException:
-            pass
+            final = False
         except InvalidValueError as e:
             if report_issues:
                 context.validation.report(e.issue)
-    return value
+
+    return final, value
 
 
 def coerce_dict_values(container, the_dict, report_issues=False):
