@@ -15,6 +15,7 @@
 import os
 import re
 from StringIO import StringIO
+from contextlib import contextmanager
 from functools import partial
 
 from .color import StyledString
@@ -85,28 +86,23 @@ DEFAULT_STYLING = {
 
 class _StylizedLogs(object):
 
-    def __init__(self, formats=None, styles=None):
-        self._formats = formats or DEFAULT_FORMATTING
-        self._styles = styles or DEFAULT_STYLING
+    def __init__(self):
+        self._formats = DEFAULT_FORMATTING
+        self._styles = DEFAULT_STYLING
         self._mark_pattern = None
 
-    def set(self, styles=None, formats=None, mark_pattern=None):
-        self._styles = styles or DEFAULT_STYLING
-        self._formats = formats or DEFAULT_FORMATTING
+    def _push(self, styles=None, formats=None, mark_pattern=None):
+        self._styles = styles or self._styles
+        self._formats = formats or self._formats
         self._mark_pattern = mark_pattern
 
-    def reset(self, to_defaults=False):
-        self._styles = DEFAULT_STYLING if to_defaults else {}
-        self._formats = DEFAULT_FORMATTING if to_defaults else {}
-        self._mark_pattern = None
-
     def __getattr__(self, item):
-        return partial(self._stilize, style_type=item[1:])
+        return partial(self._stylize, style_type=item[1:])
 
     def _level(self, level):
-        return self._stilize(level[0], level, LEVEL)
+        return self._stylize(level[0], level, LEVEL)
 
-    def _stilize(self, msg, level, style_type):
+    def _stylize(self, msg, level, style_type):
         return StyledString(msg, *self._styles[style_type].get(level.lower(), []))
 
     def _mark(self, str_):
@@ -170,11 +166,20 @@ class _StylizedLogs(object):
         return msg.getvalue()
 
 
-stylized_log = _StylizedLogs()
+stylize_log = _StylizedLogs()
+
+
+@contextmanager
+def format(styles=None, formats=None, mark_pattern=None):
+    original_styles = stylize_log._styles
+    original_formats = stylize_log._formats
+    stylize_log._push(styles=styles, formats=formats, mark_pattern=mark_pattern)
+    yield
+    stylize_log._push(styles=original_styles, formats=original_formats, mark_pattern=None)
 
 
 def log(item, *args, **kwargs):
-    return getattr(env.logging.logger, item.level.lower())(stylized_log(item), *args, **kwargs)
+    return getattr(env.logging.logger, item.level.lower())(stylize_log(item), *args, **kwargs)
 
 
 def log_list(iterator):
