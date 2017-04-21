@@ -14,71 +14,94 @@
 # limitations under the License.
 import os
 from StringIO import StringIO
+from functools import partial
 
 from .color import StyledString
 from . import logger
 from .env import env
 
+
+LEVEL = 'level'
+TIMESTAMP = 'timestamp'
+MESSAGE = 'message'
+IMPLEMENTATION = 'implementation'
+INPUTS = 'inputs'
+TRACEBACK = 'traceback'
+
+
 DEFAULT_FORMATTING = {
     logger.NO_VERBOSE: {'message': '{message}'},
     logger.LOW_VERBOSE: {
-        'message': '{timestamp} | {level} | {message}',
-        'level': '{level[0]}',
-        'timestamp': '%H:%M:%S',
+        MESSAGE: '{timestamp} | {level} | {message}',
+        LEVEL: '{level[0]}',
+        TIMESTAMP: '%H:%M:%S',
     },
     logger.MEDIUM_VERBOSE: {
-        'message': '{timestamp} | {level} | {implementation} | {message} ',
-        'level': '{level[0]}',
-        'timestamp': '%H:%M:%S'
+        MESSAGE: '{timestamp} | {level} | {implementation} | {message} ',
+        LEVEL: '{level[0]}',
+        TIMESTAMP: '%H:%M:%S'
     },
     logger.HIGH_VERBOSE: {
-        'message': '{timestamp} | {level} | {implementation}({inputs}) | {message} ',
-        'level': '{level[0]}',
-        'timestamp': '%H:%M:%S'
+        MESSAGE: '{timestamp} | {level} | {implementation} | {inputs} | {message} ',
+        LEVEL: '{level[0]}',
+        TIMESTAMP: '%H:%M:%S'
     },
 }
 
-
-def _style_level(level):
-    levels_format = {
-        'info': (StyledString.fore.LIGHTBLUE_EX, ),
-        'debug': (StyledString.fore.LIGHTRED_EX, StyledString.style.DIM),
-        'error': (StyledString.fore.RED, )
+DEFAULT_STYLES = {
+    LEVEL: {
+        'info': (StyledString.FORE.LIGHTMAGENTA_EX,),
+        'debug': (StyledString.FORE.LIGHTMAGENTA_EX, StyledString.STYLE.DIM),
+        'error': (StyledString.FORE.RED, StyledString.STYLE.BRIGHT)
+    },
+    TIMESTAMP: {
+        'info': (StyledString.FORE.LIGHTMAGENTA_EX,),
+        'debug': (StyledString.FORE.LIGHTMAGENTA_EX, StyledString.STYLE.DIM),
+        'error': (StyledString.FORE.RED, StyledString.STYLE.BRIGHT)
+    },
+    MESSAGE: {
+        'info': (StyledString.FORE.LIGHTBLUE_EX,),
+        'debug': (StyledString.FORE.LIGHTBLUE_EX, StyledString.STYLE.DIM),
+        'error': (StyledString.FORE.RED, StyledString.STYLE.BRIGHT),
+    },
+    IMPLEMENTATION: {
+        'info': (StyledString.FORE.LIGHTBLACK_EX,),
+        'debug': (StyledString.FORE.LIGHTBLACK_EX, StyledString.STYLE.DIM,),
+        'error': (StyledString.FORE.RED, StyledString.STYLE.BRIGHT,),
+    },
+    INPUTS: {
+        'info': (StyledString.FORE.BLUE,),
+        'debug': (StyledString.FORE.BLUE, StyledString.STYLE.DIM),
+        'error': (StyledString.FORE.RED, StyledString.STYLE.BRIGHT,),
+    },
+    TRACEBACK: {
+      'error':   (StyledString.FORE.RED, )
     }
-    return StyledString(level[0], *levels_format.get(level.lower(), []))
+}
 
 
-def _style_timestamp(timestamp, level):
-    timestamp_format = {
-        'info': (StyledString.fore.LIGHTBLUE_EX, StyledString.style.DIM),
-        'debug': (StyledString.fore.LIGHTBLUE_EX, StyledString.style.DIM),
-        'error': (StyledString.fore.RED,)
-    }
-    return StyledString(timestamp, *timestamp_format.get(level.lower(), []))
+class _StylizedLogs(object):
+
+    def __init__(self, styles=None):
+        self._styles = styles or DEFAULT_STYLES
+
+    def set_styles(self, styles):
+        self._styles = styles
+
+    def unset_styles(self, to_defaults=False):
+        self._styles = DEFAULT_STYLES if to_defaults else {}
+
+    def __getattr__(self, item):
+        return partial(self._style, style_type=item)
+
+    def level(self, level):
+        return self._style(level[0], level, LEVEL)
+
+    def _style(self, msg, level, style_type):
+        return StyledString(msg, *self._styles[style_type].get(level.lower(), []))
 
 
-def _style_msg(msg, level):
-    msg_foramts = {
-        'info': (StyledString.fore.LIGHTBLUE_EX, ),
-        'debug': (StyledString.fore.LIGHTBLUE_EX, StyledString.style.DIM),
-        'error': (StyledString.fore.RED, ),
-    }
-    return StyledString(msg, *msg_foramts.get(level.lower(), []))
-
-
-def _style_traceback(traceback):
-    return StyledString(traceback, StyledString.fore.RED, StyledString.style.DIM)
-
-
-def _style_implementation(implementation, level):
-    implementation_formats = {
-        'info': (StyledString.style.DIM, StyledString.fore.LIGHTBLACK_EX),
-        'debug': (StyledString.style.DIM, StyledString.fore.LIGHTBLACK_EX),
-        'error': (StyledString.fore.RED, ),
-    }
-    return StyledString(implementation, *implementation_formats.get(level.lower(), []))
-
-_style_inputs = _style_implementation
+stylized_log = _StylizedLogs()
 
 
 def _str(item, formats=None):
@@ -90,35 +113,38 @@ def _str(item, formats=None):
     formatting_kwargs = dict(item=item)
 
     # level
-    formatting_kwargs['level'] = _style_level(item.level)
+    formatting_kwargs['level'] = stylized_log.level(item.level)
 
     # implementation
     if item.task:
+        # operation task
         implementation = item.task.implementation
         inputs = dict(i.unwrap() for i in item.task.inputs.values())
     else:
+        # execution task
         implementation = item.execution.workflow_name
         inputs = dict(i.unwrap() for i in item.execution.inputs.values())
 
-    formatting_kwargs['implementation'] = _style_implementation(implementation, item.level)
-    formatting_kwargs['inputs'] = _style_inputs(inputs, item.level)
+    formatting_kwargs['implementation'] = stylized_log.implementation(implementation, item.level)
+    formatting_kwargs['inputs'] = stylized_log.inputs(inputs, item.level)
 
     # timestamp
     if 'timestamp' in formatting:
         timestamp = item.created_at.strftime(formatting['timestamp'])
     else:
         timestamp = item.created_at
-    formatting_kwargs['timestamp'] = _style_timestamp(timestamp, item.level)
+    formatting_kwargs['timestamp'] = stylized_log.timestamp(timestamp, item.level)
 
     # message
-    formatting_kwargs['message'] = _style_msg(item.msg, item.level)
+    formatting_kwargs['message'] = stylized_log.message(item.msg, item.level)
 
-    msg.write(formatting['message'].format(**formatting_kwargs) + os.linesep)
+    msg.write(formatting['message'].format(**formatting_kwargs))
 
     # Add the exception and the error msg.
     if item.traceback and env.logging.verbosity_level >= logger.MEDIUM_VERBOSE:
+        msg.write(os.linesep)
         for line in item.traceback.splitlines(True):
-            msg.write(_style_traceback('\t' + '|' + line))
+            msg.write(stylized_log.traceback('\t' + '|' + line, item.level))
 
     return msg.getvalue()
 

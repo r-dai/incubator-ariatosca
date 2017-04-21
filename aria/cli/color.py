@@ -16,45 +16,38 @@ from StringIO import StringIO
 
 import colorama
 
-colorama.init()
-
 
 class StyledString(object):
 
-    fore = colorama.Fore
-    back = colorama.Back
-    style = colorama.Style
+    FORE = colorama.Fore
+    BACK = colorama.Back
+    STYLE = colorama.Style
 
-    def __init__(self, str_to_stylize, *args, **kwargs):
+    def __init__(self, str_to_stylize, *style_args):
         """
         
         :param str_to_stylize: 
-        :param args: 
+        :param style_args: 
         :param kwargs:
             to_close: specifies if end the format on the current line. default to True
         """
-        super(StyledString, self).__init__()
-        # TODO: raise proper exception
-        if not all(self._is_valid(arg) for arg in args):
-            raise Exception("bla bla bla")
-        self._str = str_to_stylize
-        self._args = args
-        self._stylized_str = None
+        colorama.init()
+        self._original_str = str_to_stylize
+        self._args = style_args
+        self._apply_style()
 
     def __str__(self):
-        if self._stylized_str is None:
-            styling_str = StringIO()
-            self._apply_style(styling_str)
-            styling_str.write(self._str)
-            styling_str.write(self.style.RESET_ALL)
-            self.stylized_str = styling_str.getvalue()
+        return self._stylized_str
 
-        return self.stylized_str
+    def _apply_style(self):
+        assert all(self._is_valid(arg) for arg in self._args)
 
-    def _apply_style(self, styling_str):
+        styling_str = StringIO()
         for arg in self._args:
             styling_str.write(arg)
+        styling_str.write(self._original_str)
+        styling_str.write(self.STYLE.RESET_ALL)
+        self._stylized_str = styling_str.getvalue()
 
     def _is_valid(self, value):
-        return any(value in vars(instance).values()
-                   for instance in (self.fore, self.back, self.style))
+        return any(value in vars(type).values() for type in (self.FORE, self.BACK, self.STYLE))
