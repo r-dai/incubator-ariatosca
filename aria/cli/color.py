@@ -39,12 +39,19 @@ class StyledString(object):
     def __str__(self):
         return self._stylized_str
 
+    def _style_str(self, styling_str=None):
+        str_ = styling_str or StringIO
+        for arg in self._args:
+            str_.write(arg)
+        if styling_str is not None:
+            return str_
+        else:
+            return str_.getvalue()
+
     def _apply_style(self):
         assert all(self._is_valid(arg) for arg in self._args)
-
         styling_str = StringIO()
-        for arg in self._args:
-            styling_str.write(arg)
+        self._style_str(styling_str)
         styling_str.write(self._original_str)
         styling_str.write(self.STYLE.RESET_ALL)
         self._stylized_str = styling_str.getvalue()

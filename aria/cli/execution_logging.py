@@ -100,6 +100,13 @@ class _StylizedLogs(object):
     def _style(self, msg, level, style_type):
         return StyledString(msg, *self._styles[style_type].get(level.lower(), []))
 
+    def back(self, str_):
+        if 'web_app' not in str_:
+            return str_
+        modified_str = StyledString.BACK.LIGHTYELLOW_EX +\
+                       str_.replace(StyledString.STYLE.RESET_ALL,
+                                    StyledString.STYLE.RESET_ALL + StyledString.BACK.LIGHTYELLOW_EX) + StyledString.STYLE.RESET_ALL
+        return modified_str
 
 stylized_log = _StylizedLogs()
 
@@ -138,7 +145,9 @@ def _str(item, formats=None):
     # message
     formatting_kwargs['message'] = stylized_log.message(item.msg, item.level)
 
-    msg.write(formatting['message'].format(**formatting_kwargs))
+    message = formatting['message'].format(**formatting_kwargs)
+    message = stylized_log.back(message)
+    msg.write(message)
 
     # Add the exception and the error msg.
     if item.traceback and env.logging.verbosity_level >= logger.MEDIUM_VERBOSE:
