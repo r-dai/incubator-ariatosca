@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import re
 from StringIO import StringIO
 from functools import partial
 
@@ -27,7 +28,7 @@ MESSAGE = 'message'
 IMPLEMENTATION = 'implementation'
 INPUTS = 'inputs'
 TRACEBACK = 'traceback'
-
+MARKER = 'marker'
 
 DEFAULT_FORMATTING = {
     logger.NO_VERBOSE: {'message': '{message}'},
@@ -48,7 +49,7 @@ DEFAULT_FORMATTING = {
     },
 }
 
-DEFAULT_STYLES = {
+DEFAULT_STYLING = {
     LEVEL: {
         'info': (StyledString.FORE.LIGHTMAGENTA_EX,),
         'debug': (StyledString.FORE.LIGHTMAGENTA_EX, StyledString.STYLE.DIM),
@@ -76,90 +77,104 @@ DEFAULT_STYLES = {
     },
     TRACEBACK: {
       'error':   (StyledString.FORE.RED, )
-    }
+    },
+
+    MARKER: StyledString.BACK.LIGHTYELLOW_EX
 }
 
 
 class _StylizedLogs(object):
 
-    def __init__(self, styles=None):
-        self._styles = styles or DEFAULT_STYLES
+    def __init__(self, formats=None, styles=None):
+        self._formats = formats or DEFAULT_FORMATTING
+        self._styles = styles or DEFAULT_STYLING
+        self._mark_pattern = None
 
-    def set_styles(self, styles):
-        self._styles = styles
+    def set(self, styles=None, formats=None, mark_pattern=None):
+        self._styles = styles or DEFAULT_STYLING
+        self._formats = formats or DEFAULT_FORMATTING
+        self._mark_pattern = mark_pattern
 
-    def unset_styles(self, to_defaults=False):
-        self._styles = DEFAULT_STYLES if to_defaults else {}
+    def reset(self, to_defaults=False):
+        self._styles = DEFAULT_STYLING if to_defaults else {}
+        self._formats = DEFAULT_FORMATTING if to_defaults else {}
+        self._mark_pattern = None
 
     def __getattr__(self, item):
-        return partial(self._style, style_type=item)
+        return partial(self._stilize, style_type=item[1:])
 
-    def level(self, level):
-        return self._style(level[0], level, LEVEL)
+    def _level(self, level):
+        return self._stilize(level[0], level, LEVEL)
 
-    def _style(self, msg, level, style_type):
+    def _stilize(self, msg, level, style_type):
         return StyledString(msg, *self._styles[style_type].get(level.lower(), []))
 
-    def back(self, str_):
-        if 'web_app' not in str_:
+    def _mark(self, str_):
+        # TODO; this needs more work. since colors cause the patten not to match (since its not a continuous string)
+        if self._mark_pattern is None:
             return str_
-        modified_str = StyledString.BACK.LIGHTYELLOW_EX +\
-                       str_.replace(StyledString.STYLE.RESET_ALL,
-                                    StyledString.STYLE.RESET_ALL + StyledString.BACK.LIGHTYELLOW_EX) + StyledString.STYLE.RESET_ALL
+        else:
+            regex_pattern = re.compile(self._mark_pattern)
+            if not re.match(regex_pattern, str_):
+                return str_
+        marker = self._styles[MARKER]
+        modified_str = (
+            marker +
+            str_.replace(StyledString.STYLE.RESET_ALL, StyledString.STYLE.RESET_ALL + marker) +
+            StyledString.STYLE.RESET_ALL
+        )
         return modified_str
+
+    def __call__(self, item):
+        # If no formats are passed we revert to the default formats (per level)
+        formatting = self._formats.get(env.logging.verbosity_level,
+                                       DEFAULT_FORMATTING[env.logging.verbosity_level])
+        msg = StringIO()
+        formatting_kwargs = dict(item=item)
+
+        # level
+        formatting_kwargs['level'] = self._level(item.level)
+
+        # implementation
+        if item.task:
+            # operation task
+            implementation = item.task.implementation
+            inputs = dict(i.unwrap() for i in item.task.inputs.values())
+        else:
+            # execution task
+            implementation = item.execution.workflow_name
+            inputs = dict(i.unwrap() for i in item.execution.inputs.values())
+
+        formatting_kwargs['implementation'] = self._implementation(implementation, item.level)
+        formatting_kwargs['inputs'] = self._inputs(inputs, item.level)
+
+        # timestamp
+        if 'timestamp' in formatting:
+            timestamp = item.created_at.strftime(formatting['timestamp'])
+        else:
+            timestamp = item.created_at
+        formatting_kwargs['timestamp'] = self._timestamp(timestamp, item.level)
+
+        # message
+        formatting_kwargs['message'] = self._message(item.msg, item.level)
+
+        # The message would be marked out if containing the provided pattern
+        msg.write(self._mark(formatting['message'].format(**formatting_kwargs)))
+
+        # Add the exception and the error msg.
+        if item.traceback and env.logging.verbosity_level >= logger.MEDIUM_VERBOSE:
+            msg.write(os.linesep)
+            for line in item.traceback.splitlines(True):
+                msg.write(self._traceback('\t' + '|' + line, item.level))
+
+        return msg.getvalue()
+
 
 stylized_log = _StylizedLogs()
 
 
-def _str(item, formats=None):
-    # If no formats are passed we revert to the default formats (per level)
-    formats = formats or {}
-    formatting = formats.get(env.logging.verbosity_level,
-                             DEFAULT_FORMATTING[env.logging.verbosity_level])
-    msg = StringIO()
-    formatting_kwargs = dict(item=item)
-
-    # level
-    formatting_kwargs['level'] = stylized_log.level(item.level)
-
-    # implementation
-    if item.task:
-        # operation task
-        implementation = item.task.implementation
-        inputs = dict(i.unwrap() for i in item.task.inputs.values())
-    else:
-        # execution task
-        implementation = item.execution.workflow_name
-        inputs = dict(i.unwrap() for i in item.execution.inputs.values())
-
-    formatting_kwargs['implementation'] = stylized_log.implementation(implementation, item.level)
-    formatting_kwargs['inputs'] = stylized_log.inputs(inputs, item.level)
-
-    # timestamp
-    if 'timestamp' in formatting:
-        timestamp = item.created_at.strftime(formatting['timestamp'])
-    else:
-        timestamp = item.created_at
-    formatting_kwargs['timestamp'] = stylized_log.timestamp(timestamp, item.level)
-
-    # message
-    formatting_kwargs['message'] = stylized_log.message(item.msg, item.level)
-
-    message = formatting['message'].format(**formatting_kwargs)
-    message = stylized_log.back(message)
-    msg.write(message)
-
-    # Add the exception and the error msg.
-    if item.traceback and env.logging.verbosity_level >= logger.MEDIUM_VERBOSE:
-        msg.write(os.linesep)
-        for line in item.traceback.splitlines(True):
-            msg.write(stylized_log.traceback('\t' + '|' + line, item.level))
-
-    return msg.getvalue()
-
-
 def log(item, *args, **kwargs):
-    return getattr(env.logging.logger, item.level.lower())(_str(item), *args, **kwargs)
+    return getattr(env.logging.logger, item.level.lower())(stylized_log(item), *args, **kwargs)
 
 
 def log_list(iterator):

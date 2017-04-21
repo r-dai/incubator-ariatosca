@@ -28,15 +28,18 @@ def logs():
               short_help='List execution logs')
 @aria.argument('execution-id')
 @aria.options.verbose()
+@aria.options.mark_pattern()
 @aria.pass_model_storage
 @aria.pass_logger
-def list(execution_id, model_storage, logger):
+def list(execution_id, mark_pattern, model_storage, logger):
     """Display logs for an execution
     """
     logger.info('Listing logs for execution id {0}'.format(execution_id))
     log_iterator = ModelLogIterator(model_storage, execution_id)
 
+    execution_logging.stylized_log.set(mark_pattern=mark_pattern)
     any_logs = execution_logging.log_list(log_iterator)
+    execution_logging.stylized_log.reset(to_defaults=True)
 
     if not any_logs:
         logger.info('\tNo logs')
