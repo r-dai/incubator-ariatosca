@@ -20,6 +20,7 @@ from .. import table
 from .. import utils
 from .. import logger as cli_logger
 from .. import execution_logging
+from .. import color
 from ..core import aria
 from ...modeling.models import Execution
 from ...orchestrator.workflow_runner import WorkflowRunner
@@ -165,9 +166,13 @@ def start(workflow_name,
     execution_thread.raise_error_if_exists()
 
     execution = workflow_runner.execution
-    logger.info('Execution has ended with "{0}" status'.format(execution.status))
+    status_msg = 'Execution has ended with "{0}" status'.format(execution.status)
+    status_msg = color.StyledString(status_msg, color.StyledString.FORE.RED)
+    logger.info(status_msg)
     if execution.status == Execution.FAILED and execution.error:
-        logger.info('Execution error:{0}{1}'.format(os.linesep, execution.error))
+        error_msg = color.StyledString('Execution error:{0}{1}'.format(os.linesep, execution.error),
+                                       color.StyledString.FORE.RED)
+        logger.info(error_msg)
 
     if dry:
         # remove traces of the dry execution (including tasks, logs, inputs..)
